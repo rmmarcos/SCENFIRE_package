@@ -4,8 +4,8 @@
 #' This function uses the inverse cumulative distribution function (CDF)
 #' to sample from the specified power-law within given minimum and maximum bounds.
 #'
-#' @param n The number of random variates (points) to generate.
-#' @param alpha The exponent (alpha parameter) of the power-law distribution.
+#' @param n The number of random variates (points) to generate (default 100).
+#' @param alpha The exponent (alpha parameter) of the power-law distribution (default 1.5).
 #' @param xmin The lower bound (minimum value) of the truncated distribution.
 #' @param xmax The upper bound (maximum value) of the truncated distribution.
 #' @return A numeric vector of `n` random variates sampled from the truncated power-law distribution.
@@ -17,7 +17,7 @@
 #' set.seed(123)
 #' powerlaw_samples <- rpowerlaw(n = 100, alpha = 2.5, xmin = 10, xmax = 1000)
 #' # hist(powerlaw_samples, main = "Power-Law Distribution Samples")
-rpowerlaw <- function(n, alpha, xmin, xmax) {
+fit_powerlaw <- function(n=100, alpha=1.5, xmin, xmax) {
   # Inverse CDF of the truncated distribution
   r <- runif(n)
   C <- (xmax^(1 - alpha) - xmin^(1 - alpha))
@@ -32,7 +32,7 @@ rpowerlaw <- function(n, alpha, xmin, xmax) {
 #' of the fire sizes before binning and determines bin breakpoints dynamically.
 #'
 #' @param num_bins Integer. The desired number of bins for the histogram (default: 20).
-#' @param l Logical. If `TRUE`, a logarithmic transformation (`log(sizes + 1e-6)`)
+#' @param logaritmic Logical. If `TRUE`, a logarithmic transformation (`log(sizes + 1e-6)`)
 #'   is applied to `sizes`. If `FALSE`, the original scale is used. This parameter
 #'   influences both the distribution transformation and the binning.
 #' @param sizes Numeric vector. The fire sizes (e.g., area in hectares) from the
@@ -63,7 +63,7 @@ rpowerlaw <- function(n, alpha, xmin, xmax) {
 #' print("Linear Target Histogram:")
 #' print(target_linear_hist$target_hist)
 #' print(target_linear_hist$bins)
-build_target_hist <- function(num_bins=20, l=T, sizes){
+build_target_hist <- function(num_bins=20, logaritmic=T, sizes){
 
   # num_bins <- 20 	# Number of classes for the fire size distribution
 

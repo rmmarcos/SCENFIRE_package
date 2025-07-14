@@ -4,12 +4,12 @@
 \alias{build_target_hist}
 \title{Function to obtain the target histogram}
 \usage{
-build_target_hist(num_bins = 20, l = T, sizes)
+build_target_hist(num_bins = 20, logaritmic = T, sizes)
 }
 \arguments{
 \item{num_bins}{Integer. The desired number of bins for the histogram (default: 20).}
 
-\item{l}{Logical. If `TRUE`, a logarithmic transformation (`log(sizes + 1e-6)`)
+\item{logaritmic}{Logical. If `TRUE`, a logarithmic transformation (`log(sizes + 1e-6)`)
 is applied to `sizes`. If `FALSE`, the original scale is used. This parameter
 influences both the distribution transformation and the binning.}
 
