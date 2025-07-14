@@ -53,8 +53,8 @@ event_surfaces_ex <- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
 event_probabilities_ex <- rep(1/length(event_surfaces_ex), length(event_surfaces_ex))
 
 # 2. Build target histogram (e.g., using logarithmic scale)
-l <- TRUE # Set the logarithmic flag for the selection and visualization
-target_info <- build_target_hist(num_bins = 10, l = l, sizes = historical_fire_sizes_ex)
+target_info <- build_target_hist(num_bins = 10, logaritmic = l,
+  sizes = historical_fire_sizes_ex, event_surfaces = event_surfaces_ex)
 target_hist <- target_info$target_hist
 bins <- target_info$bins
 
@@ -94,7 +94,7 @@ visualize_selected_dist(result = result_dummy)
 
 # Example with linear scale (assuming appropriate setup for target_hist and bins)
 # l <- FALSE
-# target_info_linear <- build_target_hist(num_bins = 10, l = l, sizes = historical_fire_sizes_ex)
+# target_info_linear <- build_target_hist(num_bins = 10, logaritmic = l, sizes = historical_fire_sizes_ex)
 # target_hist_linear <- target_info_linear$target_hist
 # bins_linear <- target_info_linear$bins
 # result_dummy_linear <- list(
@@ -102,7 +102,7 @@ visualize_selected_dist(result = result_dummy)
 #   total_surface = sum(sample(event_surfaces_ex, 30)),
 #   final_discrepancy = 0.05 # Dummy value
 # )
-# visualize_selected_dist(result = result_dummy_linear, l = l,
+# visualize_selected_dist(result = result_dummy_linear, logaritmic = l,
 #                         bins = bins_linear, target_hist = target_hist_linear)
 }
 }

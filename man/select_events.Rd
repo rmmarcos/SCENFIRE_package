@@ -81,7 +81,7 @@ tolerance_example <- 0.05
 # For a real scenario, 'event_surfaces' here would be your historical fire sizes.
 historical_data_for_target <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95,
                                 105, 115, 125, 135, 145, 155, 165, 175, 185, 195)
-target_info_example <- build_target_hist(num_bins = 10, l = TRUE,
+target_info_example <- build_target_hist(num_bins = 10, logaritmic = TRUE,
                                          sizes = historical_data_for_target)
 target_hist_example <- target_info_example$target_hist
 bins_example <- target_info_example$bins

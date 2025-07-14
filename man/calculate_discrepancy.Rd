@@ -30,7 +30,7 @@ It can optionally apply a logarithmic transformation to the selected surfaces.
 historical_sizes_ex <- c(10, 50, 100, 200, 500, 1000)
 # Dummy 'event_surfaces' for example context (replace with actual data)
 event_surfaces <- c(5, 15, 25, 35, 45, 55)
-target_info_ex <- build_target_hist(num_bins = 5, l = TRUE, sizes = historical_sizes_ex)
+target_info_ex <- build_target_hist(num_bins = 5, logaritmic = TRUE, sizes = historical_sizes_ex)
 target_hist_ex <- target_info_ex$target_hist
 bins_ex <- target_info_ex$bins
 
@@ -46,7 +46,7 @@ print(paste("Discrepancy (log):", discrepancy_log))
 
 # Example selected surfaces for linear transformation
 simulated_surfaces_linear_ex <- c(15, 60, 110, 210, 480, 950)
-target_info_linear_ex <- build_target_hist(num_bins = 5, l = FALSE, sizes = historical_sizes_ex)
+target_info_linear_ex <- build_target_hist(num_bins = 5, logaritmic = FALSE, sizes = historical_sizes_ex)
 target_hist_linear_ex <- target_info_linear_ex$target_hist
 bins_linear_ex <- target_info_linear_ex$bins
 
