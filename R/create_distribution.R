@@ -65,12 +65,7 @@ fit_powerlaw <- function(n=100, alpha=1.5, xmin, xmax) {
 #' print(target_linear_hist$bins)
 build_target_hist <- function(num_bins=20, logaritmic=T, sizes){
 
-  # num_bins <- 20 	# Number of classes for the fire size distribution
-
-  # Parameter to define whether to use logarithmic distribution or not
-  # l <- T # If TRUE, logarithm is used; if FALSE, normal scale is used
-
-  if(l == T){
+  if(logaritmic == T){
     # If logarithm is used, the distribution of historical fire sizes is transformed
     target_distribution <- log(sizes + 1e-6) 	# A small value is added to avoid log(0)
 
