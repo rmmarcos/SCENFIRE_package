@@ -27,6 +27,6 @@ to sample from the specified power-law within given minimum and maximum bounds.
 # Generate 100 random numbers from a power-law distribution
 # with alpha=2.5, xmin=10, xmax=1000
 set.seed(123)
-powerlaw_samples <- rpowerlaw(n = 100, alpha = 2.5, xmin = 10, xmax = 1000)
+powerlaw_samples <- fit_powerlaw(n = 100, alpha = 2.5, xmin = 10, xmax = 1000)
 # hist(powerlaw_samples, main = "Power-Law Distribution Samples")
 }
