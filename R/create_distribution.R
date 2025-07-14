@@ -51,13 +51,15 @@ fit_powerlaw <- function(n=100, alpha=1.5, xmin, xmax) {
 #' event_surfaces_sizes <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95) # Dummy data for example
 #'
 #' # Build a target histogram using logarithmic transformation
-#' target_log_hist <- build_target_hist(num_bins = 10, l = TRUE, sizes = historical_fire_sizes, event_surfaces = event_surfaces_sizes)
+#' target_log_hist <- build_target_hist(num_bins = 10, logartimic = TRUE,
+#'   sizes = historical_fire_sizes, event_surfaces = event_surfaces_sizes)
 #' print("Logarithmic Target Histogram:")
 #' print(target_log_hist$target_hist)
 #' print(target_log_hist$bins)
 #'
 #' # Build a target histogram using the original scale
-#' target_linear_hist <- build_target_hist(num_bins = 10, l = FALSE, sizes = historical_fire_sizes)
+#' target_linear_hist <- build_target_hist(num_bins = 10, logartimic = FALSE,
+#'   sizes = historical_fire_sizes, event_surfaces = event_surfaces_sizes)
 #' print("Linear Target Histogram:")
 #' print(target_linear_hist$target_hist)
 #' print(target_linear_hist$bins)
