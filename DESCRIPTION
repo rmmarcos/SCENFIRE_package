@@ -1,0 +1,30 @@
+Package: scenfire
+Type: Package
+Title: A post-Processing scenario-based algorithm for the integration of wildfire spread simulations
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Marcos", "Rodrigues",
+      email = "rmarcos@unizar.es",
+      role = c("aut", "cre")
+    )
+  )
+Description: SCENFIRE is a specialized selection algorithm designed to align simulated 
+  fire perimeters with specific fire size distribution scenarios. The foundation of this 
+  approach lies in generating a vast collection of plausible simulated fires across a wide 
+  range of conditions, assuming a random pattern of ignition. 
+  The algorithm then assembles individual fire perimeters based on their specific probabilities 
+  of occurrence, e.g., determined by (i) the likelihood of ignition and (ii) the probability of 
+  particular fire-weather scenarios, including wind speed and direction.
+License: CC BY-NC-SA 4.0
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.2
+Imports: 
+    dplyr,
+    foreach,
+    methods,
+    readr,
+    sf,
+    terra,
+    tidyr
