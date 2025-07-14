@@ -37,6 +37,8 @@ fit_powerlaw <- function(n=100, alpha=1.5, xmin, xmax) {
 #'   influences both the distribution transformation and the binning.
 #' @param sizes Numeric vector. The fire sizes (e.g., area in hectares) from the
 #'   data used to build the target distribution.
+#' @param event_surfaces Numeric vector. The fire sizes (e.g., area in hectares) from the
+#'   simulated fire perimeters.
 #' @return A list containing two elements:
 #'   \describe{
 #'     \item{target_hist}{A numeric vector representing the density values of the target histogram.}
@@ -46,14 +48,10 @@ fit_powerlaw <- function(n=100, alpha=1.5, xmin, xmax) {
 #' @examples
 #' # Example historical fire sizes (replace with your actual data)
 #' historical_fire_sizes <- c(10, 50, 100, 200, 500, 1000, 1500, 2000, 3000, 5000)
-#'
-#' # Note: 'event_surfaces' is used internally in the function without being passed as an argument.
-#' # For this example to be self-contained, we define it here, but in a package context,
-#' # ensure 'event_surfaces' is either a globally available variable or properly managed.
-#' event_surfaces <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95) # Dummy data for example
+#' event_surfaces_sizes <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95) # Dummy data for example
 #'
 #' # Build a target histogram using logarithmic transformation
-#' target_log_hist <- build_target_hist(num_bins = 10, l = TRUE, sizes = historical_fire_sizes)
+#' target_log_hist <- build_target_hist(num_bins = 10, l = TRUE, sizes = historical_fire_sizes, event_surfaces = event_surfaces_sizes)
 #' print("Logarithmic Target Histogram:")
 #' print(target_log_hist$target_hist)
 #' print(target_log_hist$bins)
@@ -63,7 +61,7 @@ fit_powerlaw <- function(n=100, alpha=1.5, xmin, xmax) {
 #' print("Linear Target Histogram:")
 #' print(target_linear_hist$target_hist)
 #' print(target_linear_hist$bins)
-build_target_hist <- function(num_bins=20, logaritmic=T, sizes){
+build_target_hist <- function(num_bins=20, logaritmic=T, sizes, event_surfaces){
 
   if(logaritmic == T){
     # If logarithm is used, the distribution of historical fire sizes is transformed

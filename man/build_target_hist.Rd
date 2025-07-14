@@ -4,7 +4,7 @@
 \alias{build_target_hist}
 \title{Function to obtain the target histogram}
 \usage{
-build_target_hist(num_bins = 20, logaritmic = T, sizes)
+build_target_hist(num_bins = 20, logaritmic = T, sizes, event_surfaces)
 }
 \arguments{
 \item{num_bins}{Integer. The desired number of bins for the histogram (default: 20).}
@@ -15,6 +15,9 @@ influences both the distribution transformation and the binning.}
 
 \item{sizes}{Numeric vector. The fire sizes (e.g., area in hectares) from the
 data used to build the target distribution.}
+
+\item{event_surfaces}{Numeric vector. The fire sizes (e.g., area in hectares) from the
+simulated fire perimeters.}
 }
 \value{
 A list containing two elements:
@@ -32,14 +35,10 @@ of the fire sizes before binning and determines bin breakpoints dynamically.
 \examples{
 # Example historical fire sizes (replace with your actual data)
 historical_fire_sizes <- c(10, 50, 100, 200, 500, 1000, 1500, 2000, 3000, 5000)
-
-# Note: 'event_surfaces' is used internally in the function without being passed as an argument.
-# For this example to be self-contained, we define it here, but in a package context,
-# ensure 'event_surfaces' is either a globally available variable or properly managed.
-event_surfaces <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95) # Dummy data for example
+event_surfaces_sizes <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95) # Dummy data for example
 
 # Build a target histogram using logarithmic transformation
-target_log_hist <- build_target_hist(num_bins = 10, l = TRUE, sizes = historical_fire_sizes)
+target_log_hist <- build_target_hist(num_bins = 10, l = TRUE, sizes = historical_fire_sizes, event_surfaces = event_surfaces_sizes)
 print("Logarithmic Target Histogram:")
 print(target_log_hist$target_hist)
 print(target_log_hist$bins)
