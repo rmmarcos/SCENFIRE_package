@@ -519,42 +519,6 @@ cleanse_duplicates <- function(candidates){
 #' @export
 #' @examples
 #' \dontrun{
-#' # This example assumes 'select_events', 'build_target_hist', 'event_surfaces'
-#' # (for building target), 'event_probabilities', 'reference_surface',
-#' # 'surface_threshold', 'tolerance' are defined or available.
-#' #
-#' # 1. Define dummy historical and event data for demonstration
-#' historical_fire_sizes_ex <- c(10, 50, 100, 200, 500, 1000, 1500, 2000, 3000, 5000)
-#' event_surfaces_ex <- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
-#'                       110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
-#'                       250, 300, 350, 400, 450, 550, 600, 700, 800, 900,
-#'                       1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000, 3500, 4000, 4500, 4800)
-#' event_probabilities_ex <- rep(1/length(event_surfaces_ex), length(event_surfaces_ex))
-#'
-#' # 2. Build target histogram (e.g., using logarithmic scale)
-#' target_info <- build_target_hist(num_bins = 10, logaritmic = l,
-#'   sizes = historical_fire_sizes_ex, event_surfaces = event_surfaces_ex)
-#' target_hist <- target_info$target_hist
-#' bins <- target_info$bins
-#'
-#' # 3. Run the selection function (requires 'foreach' and a parallel backend if used)
-#' # For this example, let's create a dummy 'result' that mimics the output
-#' # of select_events without actually running it, to make the example runnable.
-#'
-#' # --- Start of dummy 'result' creation for example ---
-#' # In a real scenario, you'd call select_events here:
-#' # library(doParallel)
-#' # registerDoParallel(cores = 2)
-#' # result <- select_events(event_surfaces = event_surfaces_ex,
-#' #                        event_probabilities = event_probabilities_ex,
-#' #                        target_hist = target_hist,
-#' #                        bins = bins,
-#' #                        reference_surface = 15000, # Example target sum
-#' #                        surface_threshold = 0.8,
-#' #                        tolerance = 0.1,
-#' #                        max_it = 10)
-#' # stopImplicitCluster()
-#'
 #' # Create a dummy result for direct example of visualize_selected_dist
 #' selected_idx <- sample(1:length(event_surfaces_ex), 30) # Randomly select some indices
 #' dummy_selected_surfaces <- event_surfaces_ex[selected_idx]
@@ -568,21 +532,8 @@ cleanse_duplicates <- function(candidates){
 #' )
 #' # --- End of dummy 'result' creation ---
 #'
-#' # 4. Visualize the results
+#' #Visualize the results
 #' visualize_selected_dist(result = result_dummy)
-#'
-#' # Example with linear scale (assuming appropriate setup for target_hist and bins)
-#' # l <- FALSE
-#' # target_info_linear <- build_target_hist(num_bins = 10, logaritmic = l, sizes = historical_fire_sizes_ex)
-#' # target_hist_linear <- target_info_linear$target_hist
-#' # bins_linear <- target_info_linear$bins
-#' # result_dummy_linear <- list(
-#' #   selected_surfaces = sample(event_surfaces_ex, 30),
-#' #   total_surface = sum(sample(event_surfaces_ex, 30)),
-#' #   final_discrepancy = 0.05 # Dummy value
-#' # )
-#' # visualize_selected_dist(result = result_dummy_linear, logaritmic = l,
-#' #                         bins = bins_linear, target_hist = target_hist_linear)
 #' }
 visualize_selected_dist <- function(result = result, logaritmic = T) {
 
@@ -602,20 +553,20 @@ visualize_selected_dist <- function(result = result, logaritmic = T) {
     if(logaritmic == TRUE){
       selected_hist <- hist(log(selected_surfaces + 1e-6), breaks = bins, plot = FALSE)$density
 
-      hist(log(selected_surfaces + 1e-6), breaks = bins, freq = FALSE, cologaritmic = rgb(0, 0, 1, 0.5),
+      hist(log(selected_surfaces + 1e-6), breaks = bins, freq = FALSE, col = rgb(0, 0, 1, 0.5),
            main = "Selected vs. Target Distribution (log-transformed)",
            xlab = "Fire Size (log)", ylab = "Density")
-      lines(bins[-length(bins)], target_hist, type = "l", cologaritmic = "red", lwd = 2)
-      legend("topright", legend = c("Selected", "Target"), fillogaritmic = c(rgb(0, 0, 1, 0.5), NA), cologaritmic = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
+      lines(bins[-length(bins)], target_hist, type = "l", col = "red", lwd = 2)
+      legend("topright", legend = c("Selected", "Target"), fill = c(rgb(0, 0, 1, 0.5), NA), cologaritmic = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
 
     } else {
       selected_hist <- hist((selected_surfaces), breaks = bins, plot = FALSE)$density
 
-      hist(selected_surfaces, breaks = bins, freq = FALSE, cologaritmic = rgb(0, 0, 1, 0.5),
+      hist(selected_surfaces, breaks = bins, freq = FALSE, col = rgb(0, 0, 1, 0.5),
            main = "Selected vs. Target Distribution",
            xlab = "Fire Size", ylab = "Density")
-      lines(bins[-length(bins)], target_hist, type = "l", cologaritmic = "red", lwd = 2)
-      legend("topright", legend = c("Selected", "Objetivo"), fillogaritmic = c(rgb(0, 0, 1, 0.5), NA), cologaritmic = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
+      lines(bins[-length(bins)], target_hist, type = "l", col = "red", lwd = 2)
+      legend("topright", legend = c("Selected", "Objetivo"), fill = c(rgb(0, 0, 1, 0.5), NA), cologaritmic = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
     }
 
   } else {
