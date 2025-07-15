@@ -173,7 +173,7 @@ calculate_discrepancy <- function(selected_surfaces, target_hist, bins, logaritm
 #' and probabilistic, aiming to minimize the discrepancy while accumulating
 #' a total surface area above a certain threshold.
 #'
-#' @param event_surfaces Numeric vector of surface values for all available
+#' @param event_sizes Numeric vector of surface values for all available
 #'   simulated events.
 #' @param event_probabilities Numeric vector of probabilities corresponding to each event in `event_surfaces`.
 #'   These probabilities are used to influence the selection of events within each bin.
@@ -236,7 +236,7 @@ calculate_discrepancy <- function(selected_surfaces, target_hist, bins, logaritm
 #'   reference_surface = reference_surface_example,
 #'   surface_threshold = surface_threshold_example,
 #'   tolerance = tolerance_example,
-#'   max_it = 50 # Reduced iterations for example
+#'   max_it = 5 # Reduced iterations for example
 #' )
 #'
 #' if (!is.null(selected_events_result)) {
@@ -248,14 +248,14 @@ calculate_discrepancy <- function(selected_surfaces, target_hist, bins, logaritm
 #' # Stop the parallel cluster when done
 #' # stopImplicitCluster()
 #' }
-select_events <- function(event_surfaces, event_probabilities, target_hist, bins,
+select_events <- function(event_sizes, event_probabilities, target_hist, bins,
                           reference_surface, surface_threshold, tolerance, max_it = 5, logaritmic = T) {
 
   num_cores <- max_it  # Número de núcleos a usar (idealmente todos menos uno)
   cl <- makeCluster(num_cores)
   registerDoParallel(cl)
 
-  event_surfaces <- event_surfaces
+  event_surfaces <- event_sizes
 
   # Exporta variables y funciones necesarias al clúster paralelo
   clusterExport(cl, list("calculate_discrepancy",

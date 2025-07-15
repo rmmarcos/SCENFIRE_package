@@ -5,7 +5,7 @@
 \title{Function to select simulated perimeters}
 \usage{
 select_events(
-  event_surfaces,
+  event_sizes,
   event_probabilities,
   target_hist,
   bins,
@@ -17,7 +17,7 @@ select_events(
 )
 }
 \arguments{
-\item{event_surfaces}{Numeric vector of surface values for all available
+\item{event_sizes}{Numeric vector of surface values for all available
 simulated events.}
 
 \item{event_probabilities}{Numeric vector of probabilities corresponding to each event in `event_surfaces`.
@@ -95,7 +95,7 @@ selected_events_result <- select_events(
   reference_surface = reference_surface_example,
   surface_threshold = surface_threshold_example,
   tolerance = tolerance_example,
-  max_it = 50 # Reduced iterations for example
+  max_it = 5 # Reduced iterations for example
 )
 
 if (!is.null(selected_events_result)) {
