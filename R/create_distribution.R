@@ -255,6 +255,8 @@ select_events <- function(event_surfaces, event_probabilities, target_hist, bins
   cl <- makeCluster(num_cores)
   registerDoParallel(cl)
 
+  event_surfaces <- event_surfaces
+
   # Exporta variables y funciones necesarias al clúster paralelo
   clusterExport(cl, list("calculate_discrepancy",
                          "event_surfaces",
