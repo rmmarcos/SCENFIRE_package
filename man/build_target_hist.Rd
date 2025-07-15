@@ -33,21 +33,33 @@ historical fire events). It allows for an optional logarithmic transformation
 of the fire sizes before binning and determines bin breakpoints dynamically.
 }
 \examples{
-# Example historical fire sizes (replace with your actual data)
-historical_fire_sizes <- c(10, 50, 100, 200, 500, 1000, 1500, 2000, 3000, 5000)
-event_surfaces_sizes <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95) # Dummy data for example
+# Dummy data for demonstration (replace with your actual data)
+set.seed(123)
+historical_data_for_target <- floor(fit_powerlaw(n = 500, alpha = 2, xmin = 10, xmax = 10000))
+event_surfaces <- fit_powerlaw(n = 10000, alpha = 2, xmin = 10, xmax = 10000)
 
-# Build a target histogram using logarithmic transformation
-target_log_hist <- build_target_hist(num_bins = 10, logartimic = TRUE,
-  sizes = historical_fire_sizes, event_surfaces = event_surfaces_sizes)
-print("Logarithmic Target Histogram:")
-print(target_log_hist$target_hist)
-print(target_log_hist$bins)
+# Discard simulated fires that are too large (below 110\% max historical size)
+event_surfaces <- event_surfaces[event_surfaces < max(historical_data_for_target) * 1.1]
 
-# Build a target histogram using the original scale
-target_linear_hist <- build_target_hist(num_bins = 10, logartimic = FALSE,
-  sizes = historical_fire_sizes, event_surfaces = event_surfaces_sizes)
-print("Linear Target Histogram:")
-print(target_linear_hist$target_hist)
-print(target_linear_hist$bins)
+# Default configuration: logaritmic transformation on fire size
+target_info_example <- build_target_hist(num_bins = 10, logaritmic = TRUE,
+                                         sizes = historical_data_for_target,
+                                         event_surfaces = event_surfaces)
+
+# Print results
+target_hist <- target_info_example$target_hist
+print(target_hist)
+bins <- target_info_example$bins
+print(bins)
+
+# Alternate configuration: original frequency distribution on fire size
+target_info_example <- build_target_hist(num_bins = 10, logaritmic = FALSE,
+                                         sizes = historical_data_for_target,
+                                         event_surfaces = event_surfaces)
+
+# Print results
+target_hist <- target_info_example$target_hist
+print(target_hist)
+bins <- target_info_example$bins
+print(bins)
 }

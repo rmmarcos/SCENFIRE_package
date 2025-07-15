@@ -46,23 +46,35 @@ fit_powerlaw <- function(n=100, alpha=1.5, xmin, xmax) {
 #'   }
 #' @export
 #' @examples
-#' # Example historical fire sizes (replace with your actual data)
-#' historical_fire_sizes <- c(10, 50, 100, 200, 500, 1000, 1500, 2000, 3000, 5000)
-#' event_surfaces_sizes <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95) # Dummy data for example
+#' # Dummy data for demonstration (replace with your actual data)
+#' set.seed(123)
+#' historical_data_for_target <- floor(fit_powerlaw(n = 500, alpha = 2, xmin = 10, xmax = 10000))
+#' event_surfaces <- fit_powerlaw(n = 10000, alpha = 2, xmin = 10, xmax = 10000)
 #'
-#' # Build a target histogram using logarithmic transformation
-#' target_log_hist <- build_target_hist(num_bins = 10, logartimic = TRUE,
-#'   sizes = historical_fire_sizes, event_surfaces = event_surfaces_sizes)
-#' print("Logarithmic Target Histogram:")
-#' print(target_log_hist$target_hist)
-#' print(target_log_hist$bins)
+#' # Discard simulated fires that are too large (below 110% max historical size)
+#' event_surfaces <- event_surfaces[event_surfaces < max(historical_data_for_target) * 1.1]
 #'
-#' # Build a target histogram using the original scale
-#' target_linear_hist <- build_target_hist(num_bins = 10, logartimic = FALSE,
-#'   sizes = historical_fire_sizes, event_surfaces = event_surfaces_sizes)
-#' print("Linear Target Histogram:")
-#' print(target_linear_hist$target_hist)
-#' print(target_linear_hist$bins)
+#' # Default configuration: logaritmic transformation on fire size
+#' target_info_example <- build_target_hist(num_bins = 10, logaritmic = TRUE,
+#'                                          sizes = historical_data_for_target,
+#'                                          event_surfaces = event_surfaces)
+#'
+#' # Print results
+#' target_hist <- target_info_example$target_hist
+#' print(target_hist)
+#' bins <- target_info_example$bins
+#' print(bins)
+#'
+#' # Alternate configuration: original frequency distribution on fire size
+#' target_info_example <- build_target_hist(num_bins = 10, logaritmic = FALSE,
+#'                                          sizes = historical_data_for_target,
+#'                                          event_surfaces = event_surfaces)
+#'
+#' # Print results
+#' target_hist <- target_info_example$target_hist
+#' print(target_hist)
+#' bins <- target_info_example$bins
+#' print(bins)
 build_target_hist <- function(num_bins=20, logaritmic=T, sizes, event_surfaces){
 
   if(logaritmic == T){
@@ -207,43 +219,47 @@ calculate_discrepancy <- function(selected_surfaces, target_hist, bins, logaritm
 #' # This example requires the 'foreach' package and a parallel backend (e.g., 'doParallel')
 #' # to be set up.
 #' # library(doParallel)
-#' # registerDoParallel(cores = 2) # Use 2 cores for example purposes
 #'
 #' # Dummy data for demonstration (replace with your actual data)
-#' event_surfaces_example <- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
-#'                             110, 120, 130, 140, 150, 160, 170, 180, 190, 200)
-#' event_probabilities_example <- rep(1/length(event_surfaces_example),
-#'                                    length(event_surfaces_example))
-#' reference_surface_example <- 800
-#' surface_threshold_example <- 0.9
-#' tolerance_example <- 0.05
+#' set.seed(123)
+#' historical_data_for_target <- floor(fit_powerlaw(n = 500, alpha = 2, xmin = 10, xmax = 10000))
+#' event_surfaces <- fit_powerlaw(n = 10000, alpha = 2, xmin = 10, xmax = 10000)
+#' # Discard simulated fires that are too large (below 110% max historical size)
+#' event_surfaces <- event_surfaces[event_surfaces<max(historical_data_for_target)*1.1]
+#' event_probabilities <- rnorm(length(event_surfaces))
+#' event_probabilities <- (event_probabilities-min(event_probabilities))/(max(event_probabilities)-min(event_probabilities))
+#'
+#' y <- 100 #number of years spanning historical fire data
+#' check_fire_data(fires_hist_size = historical_data_for_target,
+#'                 sim_perimeters_size = event_surfaces,
+#'                 n_years = y)
+#'
+#' reference_surface_example <- sum(historical_data_for_target)/y
+#' surface_threshold_example <- check_fire_data(fires_hist_size = historical_data_for_target,
+#'                                              sim_perimeters_size = event_surfaces,
+#'                                              n_years = 10)
+#' tolerance_example <- 0.1
 #'
 #' # Create a dummy target histogram (assuming 'event_surfaces' from historical data)
 #' # For a real scenario, 'event_surfaces' here would be your historical fire sizes.
-#' historical_data_for_target <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95,
-#'                                 105, 115, 125, 135, 145, 155, 165, 175, 185, 195)
+#'
 #' target_info_example <- build_target_hist(num_bins = 10, logaritmic = TRUE,
-#'                                          sizes = historical_data_for_target)
-#' target_hist_example <- target_info_example$target_hist
-#' bins_example <- target_info_example$bins
+#'                                          sizes = historical_data_for_target,
+#'                                          event_surfaces = event_surfaces)
+#' target_hist <- target_info_example$target_hist
+#' bins <- target_info_example$bins
 #'
 #' # Run the selection process
 #' selected_events_result <- select_events(
-#'   event_surfaces = event_surfaces_example,
-#'   event_probabilities = event_probabilities_example,
-#'   target_hist = target_hist_example,
-#'   bins = bins_example,
+#'   event_sizes = event_surfaces,
+#'   event_probabilities = event_probabilities,
+#'   target_hist = target_hist,
+#'   bins = bins,
 #'   reference_surface = reference_surface_example,
 #'   surface_threshold = surface_threshold_example,
 #'   tolerance = tolerance_example,
-#'   max_it = 5 # Reduced iterations for example
+#'   max_it = 2 # Reduced iterations for example
 #' )
-#'
-#' if (!is.null(selected_events_result)) {
-#'   print(paste("Total selected surface:", selected_events_result$total_surface))
-#'   print(paste("Final discrepancy:", selected_events_result$final_discrepancy))
-#'   # You can further analyze selected_events_result$selected_surfaces
-#' }
 #'
 #' # Stop the parallel cluster when done
 #' # stopImplicitCluster()
@@ -519,21 +535,60 @@ cleanse_duplicates <- function(candidates){
 #' @export
 #' @examples
 #' \dontrun{
-#' # Create a dummy result for direct example of visualize_selected_dist
-#' selected_idx <- sample(1:length(event_surfaces_ex), 30) # Randomly select some indices
-#' dummy_selected_surfaces <- event_surfaces_ex[selected_idx]
-#' dummy_total_surface <- sum(dummy_selected_surfaces)
-#' dummy_final_discrepancy <- calculate_discrepancy(dummy_selected_surfaces, target_hist, bins, l)
+#' # This example requires the 'foreach' package and a parallel backend (e.g., 'doParallel')
+#' # to be set up.
+#' # library(doParallel)
 #'
-#' result_dummy <- list(
-#'   selected_surfaces = dummy_selected_surfaces,
-#'   total_surface = dummy_total_surface,
-#'   final_discrepancy = dummy_final_discrepancy
+#' # Dummy data for demonstration (replace with your actual data)
+#' set.seed(123)
+#' historical_data_for_target <- floor(fit_powerlaw(n = 500, alpha = 2, xmin = 10, xmax = 10000))
+#' event_surfaces <- fit_powerlaw(n = 10000, alpha = 2, xmin = 10, xmax = 10000)
+#' # Discard simulated fires that are too large (below 110% max historical size)
+#' event_surfaces <- event_surfaces[event_surfaces<max(historical_data_for_target)*1.1]
+#' event_probabilities <- rnorm(length(event_surfaces))
+#' event_probabilities <- (event_probabilities-min(event_probabilities))/(max(event_probabilities)-min(event_probabilities))
+#'
+#' y <- 100 #number of years spanning historical fire data
+#' check_fire_data(fires_hist_size = historical_data_for_target,
+#'                 sim_perimeters_size = event_surfaces,
+#'                 n_years = y)
+#'
+#' reference_surface_example <- sum(historical_data_for_target)/y
+#' surface_threshold_example <- check_fire_data(fires_hist_size = historical_data_for_target,
+#'                                              sim_perimeters_size = event_surfaces,
+#'                                              n_years = 10)
+#' tolerance_example <- 0.1
+#'
+#' # Create a dummy target histogram (assuming 'event_surfaces' from historical data)
+#' # For a real scenario, 'event_surfaces' here would be your historical fire sizes.
+#'
+#' target_info_example <- build_target_hist(num_bins = 10, logaritmic = TRUE,
+#'                                          sizes = historical_data_for_target,
+#'                                          event_surfaces = event_surfaces)
+#' target_hist <- target_info_example$target_hist
+#' bins <- target_info_example$bins
+#'
+#' # Run the selection process
+#' selected_events_result <- select_events(
+#'   event_sizes = event_surfaces,
+#'   event_probabilities = event_probabilities,
+#'   target_hist = target_hist,
+#'   bins = bins,
+#'   reference_surface = reference_surface_example,
+#'   surface_threshold = surface_threshold_example,
+#'   tolerance = tolerance_example,
+#'   max_it = 2 # Reduced iterations for example
 #' )
-#' # --- End of dummy 'result' creation ---
 #'
-#' #Visualize the results
-#' visualize_selected_dist(result = result_dummy)
+#' visualize_selected_dist(result = selected_events_result,
+#'   logaritmic = T,
+#'   target_hist = target_hist,
+#'   bins = bins)
+#'
+#' # Stop the parallel cluster when done
+#' # stopImplicitCluster()
+#'
+#' visualize_selected_dist(result = selected_events_result)
 #' }
 visualize_selected_dist <- function(result = result, logaritmic = T, target_hist=target_hist, bins=bins) {
 
@@ -607,6 +662,10 @@ visualize_selected_dist <- function(result = result, logaritmic = T, target_hist
 #' check_fire_data(fires_hist_size = c(100, 500, 1000, 2000),
 #'                 sim_perimeters_size = c(10, 50, 80, 120, 500, 1500),
 #'                 n_years = 10)
+#' # Example 4: Correct data
+#'check_fire_data(fires_hist_size = c(1, 5, 10, 600),
+#'                sim_perimeters_size = c(10, 50, 80, 120, 500, 2500),
+#'                n_years = 10)
 check_fire_data <- function(fires_hist_size, sim_perimeters_size, n_years) {
 
   size_check <- max(fires_hist_size) > max(sim_perimeters_size)

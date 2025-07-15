@@ -41,6 +41,10 @@ check_fire_data(fires_hist_size = c(100, 500, 1000, 2000),
 check_fire_data(fires_hist_size = c(100, 500, 1000, 2000),
                 sim_perimeters_size = c(10, 50, 80, 120, 500, 1500),
                 n_years = 10)
+# Example 4: Correct data
+check_fire_data(fires_hist_size = c(1, 5, 10, 600),
+               sim_perimeters_size = c(10, 50, 80, 120, 500, 2500),
+               n_years = 10)
 }
 \seealso{
 \code{\link{get_select_params}}

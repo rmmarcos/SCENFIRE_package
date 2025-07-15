@@ -108,8 +108,6 @@ selected_events_result <- select_events(
   max_it = 2 # Reduced iterations for example
 )
 
-visualize_selected_dist(result = selected_events_result)
-
 # Stop the parallel cluster when done
 # stopImplicitCluster()
 }
