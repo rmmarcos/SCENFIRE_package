@@ -557,7 +557,7 @@ visualize_selected_dist <- function(result = result, logaritmic = T) {
            main = "Selected vs. Target Distribution (log-transformed)",
            xlab = "Fire Size (log)", ylab = "Density")
       lines(bins[-length(bins)], target_hist, type = "l", col = "red", lwd = 2)
-      legend("topright", legend = c("Selected", "Target"), fill = c(rgb(0, 0, 1, 0.5), NA), cologaritmic = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
+      legend("topright", legend = c("Selected", "Target"), fill = c(rgb(0, 0, 1, 0.5), NA), col = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
 
     } else {
       selected_hist <- hist((selected_surfaces), breaks = bins, plot = FALSE)$density
@@ -566,7 +566,7 @@ visualize_selected_dist <- function(result = result, logaritmic = T) {
            main = "Selected vs. Target Distribution",
            xlab = "Fire Size", ylab = "Density")
       lines(bins[-length(bins)], target_hist, type = "l", col = "red", lwd = 2)
-      legend("topright", legend = c("Selected", "Objetivo"), fill = c(rgb(0, 0, 1, 0.5), NA), cologaritmic = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
+      legend("topright", legend = c("Selected", "Objetivo"), fill = c(rgb(0, 0, 1, 0.5), NA), col = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
     }
 
   } else {
