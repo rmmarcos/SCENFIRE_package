@@ -4,7 +4,12 @@
 \alias{visualize_selected_dist}
 \title{Visualize Selected Fire Perimeter Distribution}
 \usage{
-visualize_selected_dist(result = result, logaritmic = T)
+visualize_selected_dist(
+  result = result,
+  logaritmic = T,
+  target_hist = target_hist,
+  bins = bins
+)
 }
 \arguments{
 \item{result}{A list object, typically the output from the `select_events` function.
@@ -20,12 +25,12 @@ If `TRUE`, it indicates that a logarithmic transformation was applied to the
 fire sizes during the selection process and should be used for visualization.
 If `FALSE`, the original scale is used.}
 
+\item{target_hist}{Numeric vector (assumed to be available in the calling environment).
+The density values of the target histogram, typically obtained from `build_target_hist`.}
+
 \item{bins}{Numeric vector (assumed to be available in the calling environment).
 The breakpoints for the histogram bins. This should be consistent with the
 `bins` output from `build_target_hist`.}
-
-\item{target_hist}{Numeric vector (assumed to be available in the calling environment).
-The density values of the target histogram, typically obtained from `build_target_hist`.}
 }
 \value{
 This function does not return a value. It produces a plot as a side effect

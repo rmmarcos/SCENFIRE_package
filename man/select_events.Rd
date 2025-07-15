@@ -66,43 +66,49 @@ a total surface area above a certain threshold.
 # This example requires the 'foreach' package and a parallel backend (e.g., 'doParallel')
 # to be set up.
 # library(doParallel)
-# registerDoParallel(cores = 2) # Use 2 cores for example purposes
 
 # Dummy data for demonstration (replace with your actual data)
-event_surfaces_example <- c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100,
-                            110, 120, 130, 140, 150, 160, 170, 180, 190, 200)
-event_probabilities_example <- rep(1/length(event_surfaces_example),
-                                   length(event_surfaces_example))
-reference_surface_example <- 800
-surface_threshold_example <- 0.9
-tolerance_example <- 0.05
+set.seed(123)
+historical_data_for_target <- floor(fit_powerlaw(n = 500, alpha = 2, xmin = 10, xmax = 10000))
+event_surfaces <- fit_powerlaw(n = 10000, alpha = 2, xmin = 10, xmax = 10000)
+# Discard simulated fires that are too large (below 110\% max historical size)
+event_surfaces <- event_surfaces[event_surfaces<max(historical_data_for_target)*1.1]
+event_probabilities <- rnorm(length(event_surfaces))
+event_probabilities <- (event_probabilities-min(event_probabilities))/(max(event_probabilities)-min(event_probabilities))
+
+y <- 100 #number of years spanning historical fire data
+check_fire_data(fires_hist_size = historical_data_for_target,
+                sim_perimeters_size = event_surfaces,
+                n_years = y)
+
+reference_surface_example <- sum(historical_data_for_target)/y
+surface_threshold_example <- check_fire_data(fires_hist_size = historical_data_for_target,
+                                             sim_perimeters_size = event_surfaces,
+                                             n_years = 10)
+tolerance_example <- 0.1
 
 # Create a dummy target histogram (assuming 'event_surfaces' from historical data)
 # For a real scenario, 'event_surfaces' here would be your historical fire sizes.
-historical_data_for_target <- c(5, 15, 25, 35, 45, 55, 65, 75, 85, 95,
-                                105, 115, 125, 135, 145, 155, 165, 175, 185, 195)
+
 target_info_example <- build_target_hist(num_bins = 10, logaritmic = TRUE,
-                                         sizes = historical_data_for_target)
-target_hist_example <- target_info_example$target_hist
-bins_example <- target_info_example$bins
+                                         sizes = historical_data_for_target,
+                                         event_surfaces = event_surfaces)
+target_hist <- target_info_example$target_hist
+bins <- target_info_example$bins
 
 # Run the selection process
 selected_events_result <- select_events(
-  event_surfaces = event_surfaces_example,
-  event_probabilities = event_probabilities_example,
-  target_hist = target_hist_example,
-  bins = bins_example,
+  event_sizes = event_surfaces,
+  event_probabilities = event_probabilities,
+  target_hist = target_hist,
+  bins = bins,
   reference_surface = reference_surface_example,
   surface_threshold = surface_threshold_example,
   tolerance = tolerance_example,
-  max_it = 5 # Reduced iterations for example
+  max_it = 2 # Reduced iterations for example
 )
 
-if (!is.null(selected_events_result)) {
-  print(paste("Total selected surface:", selected_events_result$total_surface))
-  print(paste("Final discrepancy:", selected_events_result$final_discrepancy))
-  # You can further analyze selected_events_result$selected_surfaces
-}
+visualize_selected_dist(result = selected_events_result)
 
 # Stop the parallel cluster when done
 # stopImplicitCluster()

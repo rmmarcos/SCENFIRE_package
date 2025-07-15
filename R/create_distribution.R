@@ -535,7 +535,7 @@ cleanse_duplicates <- function(candidates){
 #' #Visualize the results
 #' visualize_selected_dist(result = result_dummy)
 #' }
-visualize_selected_dist <- function(result = result, logaritmic = T) {
+visualize_selected_dist <- function(result = result, logaritmic = T, target_hist=target_hist, bins=bins) {
 
   # Visualization of results
   if (!is.null(result$selected_surfaces)) {
