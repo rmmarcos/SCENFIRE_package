@@ -667,10 +667,16 @@ check_fire_data <- function(fires_hist_size, sim_perimeters_size, n_years) {
   if(!size_check & !area_check){
 
     st <- get_select_params(fires_hist_size, sim_perimeters_size, n_years)
+    num_seasons <- floor(st*0.1)
 
-    cat('Sufficient simulated perimeters and burned area. Maximum surface threshold: ', st,'.\n Recommended surface threshold: ',floor(st*0.1), "\n")
+    if(num_seasons>0){
 
-    return(floor(st*0.1))
+      cat("Sufficient simulated perimeters and burned area. Maximum surface threshold: ",
+          st,".\n Recommended surface threshold: ",floor(st*0.1), "\n")
+
+      return(num_seasons)
+
+    }else{"Not enough simulated fires. Extra simulations are needed."}
 
   }
 
