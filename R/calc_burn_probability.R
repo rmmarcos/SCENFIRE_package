@@ -1,190 +1,214 @@
-#' Convert Fire Length Points (FLP) data to a raster layer
+### Roxygen Documentation with CRAN-Ready Examples (Updated for FLP20 Structure)
+
+#' @title Convert FLP20 file to a data frame
 #'
-#' This function reads a CSV file containing Fire Length Points (FLP) data,
-#' processes the `FIL1` to `FIL6` columns to determine an estimated flame length (FL)
-#' based on predefined intervals (e.g., FIL1 = 0-0.6m, FIL2 = 0.6-1.2m, etc.).
-#' It then converts these points into a `terra` SpatVector and rasterizes them
-#' onto a reference raster grid, aggregating values by mean for overlapping points.
+#' @description
+#' Reads a .csv file, typically an FLP20 output, filters for positive burning probabilities,
+#' and reshapes the data to long format, calculating flame length (FL) from `FIL` columns.
+#' `PBurn` is expected to be 1 for individual fires, and `FIL` columns are binary (1 or 0).
 #'
-#' @param n Integer index indicating which FLP file from `flp.files` to process.
-#' @param r A `terra::SpatRaster` object that serves as the reference grid
-#'   for rasterization. The extent and resolution of `r` will define the output raster.
-#' @return A `terra::SpatRaster` object where each cell contains the mean
-#'   flame length (FL) value derived from the FLP data.
-#' @importFrom utils read.csv
-#' @importFrom tidyr pivot_longer
-#' @importFrom dplyr filter mutate select case_when
-#' @importFrom terra vect rasterize
-#' @export
-#' @examples
-#' \dontrun{
-#' # Assuming 'flp.files' is a character vector of paths to FLP CSVs
-#' # and 'reference_raster' is a pre-existing terra SpatRaster object.
-#' #
-#' # # Example reference raster (replace with your actual raster)
-#' # library(terra)
-#' # r_ref_example <- rast(nrows=10, ncols=10, xmin=0, xmax=100, ymin=0, ymax=100,
-#' #                       crs="EPSG:25830")
-#' #
-#' # # Example flp.files (replace with your actual file paths)
-#' # # Create a dummy CSV for demonstration
-#' # dummy_flp_path <- tempfile(fileext = ".csv")
-#' # write.csv(data.frame(XPos=c(10,20,30), YPos=c(10,20,30),
-#' #                      FIL1=c(1,0,0), FIL2=c(0,1,0), FIL3=c(0,0,1),
-#' #                      FIL4=0, FIL5=0, FIL6=0),
-#' #           dummy_flp_path, row.names = FALSE)
-#' # flp.files <- c(dummy_flp_path)
-#' #
-#' # fl_raster <- flp_to_raster(n = 1, r = r_ref_example)
-#' # plot(fl_raster, main = "Flame Length Raster")
-#' # unlink(dummy_flp_path) # Clean up dummy file
-#' }
-flp_to_raster <- function(n,r){
-
-  foo <- read.csv(flp.files[n]) |>
-    pivot_longer(cols = FIL1:FIL6) |>
-    filter(value>0) |>
-    mutate(FL = case_when(
-
-      value == 1 & name == "FIL1" ~ 0.3,
-      value == 1 & name == "FIL2" ~ 0.6,
-      value == 1 & name == "FIL3" ~ 1.2,
-      value == 1 & name == "FIL4" ~ 1.8,
-      value == 1 & name == "FIL5" ~ 2.4,
-      value == 1 & name == "FIL6" ~ 3.7,
-    )) |>
-    select(XPos,YPos,FL)
-
-  # fl.r <- rast(foo,"xyz") # Original comment for reference
-
-  xyz_points <- vect(foo, geom = c("XPos", "YPos"))
-  fl.r <- rasterize(xyz_points, r, field = "FL", fun = "mean") 	# or fun = "first", etc.
-
-  return(fl.r)
-
-}
-
-
-#' Convert 20-Category Fire Length Points (FLP20) to Raster
-#'
-#' This function reads a specific type of Fire Length Points (FLP20) CSV file,
-#' which contains 20 categories of flame length. It processes these categories
-#' to calculate a central flame length (`llama_m`) for each point and then
-#' rasterizes these points onto a provided reference raster grid.
-#'
-#' @param v A data frame or tibble that contains the `path` to the FLP20 CSV files.
-#'   This parameter defaults to `candidate_surfaces_cleansed`, implying it's often
-#'   used within a larger workflow where this variable is available.
-#' @param n Integer index indicating which file path from `v` to process.
-#' @param r_ref A `terra::SpatRaster` object that serves as the reference grid
-#'   for rasterization. Its CRS will be used for the new `SpatVector`.
-#' @return A `terra::SpatRaster` object where each cell contains the mean
-#'   flame length (`llama_m`) value, rasterized to the extent and resolution of `r_ref`.
+#' @param file A character string specifying the path to the FLP20 .csv file.
+#' @return A data frame with reshaped data, including `name` (original FIL column index)
+#'   and `FL` (calculated flame length).
 #' @importFrom readr read_csv
-#' @importFrom terra vect rasterize crs
+#' @importFrom dplyr filter mutate
+#' @importFrom tidyr pivot_longer starts_with
 #' @export
+#'
+#' @examples
+#' # Create a dummy FLP20 CSV file representing individual fires
+#' # Each row is a unique fire event at a specific XPos, YPos.
+#' # PBurn is 1, and only one FIL column is 1 for the flame length category.
+#' temp_flp20_file <- tempfile(fileext = ".csv")
+#' dummy_data <- data.frame(
+#'   XPos = c(10, 20, 10, 30),
+#'   YPos = c(10, 20, 20, 10),
+#'   PBurn = c(1, 1, 1, 1), # PBurn set to 1 for individual fires
+#'   FIL1 = c(1, 0, 0, 0),  # Fire 1 is in FL bin 1 (0.25)
+#'   FIL2 = c(0, 1, 0, 0),  # Fire 2 is in FL bin 2 (0.75)
+#'   FIL3 = c(0, 0, 1, 0),  # Fire 3 is in FL bin 3 (1.25)
+#'   FIL4 = c(0, 0, 0, 1)   # Fire 4 is in FL bin 4 (1.75)
+#'   # FIL5 to FIL20 would be 0 for these examples
+#' )
+#' write.csv(dummy_data, temp_flp20_file, row.names = FALSE)
+#'
+#' # Process the dummy file
+#' df_result <- flp20_to_df(temp_flp20_file)
+#' print(head(df_result))
+#'
+#' # Expected output for first few rows after processing:
+#' # XPos YPos PBurn name    value   FL
+#' # 1   10   10     1    1       1 0.25
+#' # 2   20   20     1    2       1 0.75
+#' # 3   10   20     1    3       1 1.25
+#' # 4   30   10     1    4       1 1.75
+#'
+#' # Clean up the dummy file
+#' unlink(temp_flp20_file)
+flp20_to_df <- function(file){
+
+  df <- read.csv(file)
+
+  # Ensure FIL columns are read, even if not all 20 are present in smaller files
+  # This makes the code more robust if file only has FIL1, FIL2, FIL3 etc.
+  fil_cols_present <- names(df)[grepl("^FIL[0-9]+$", names(df))]
+
+  df <- df |>
+    filter(PBurn > 0) |> # Still filters for positive PBurn (e.g., PBurn = 1)
+    pivot_longer(cols = all_of(fil_cols_present), names_to = "name", values_to = "value") |>
+    # Filter out entries where FILX was 0 (i.e., this fire was not in this FL bin)
+    filter(value == 1) |>
+    mutate(name = sub("FIL", "", name), # Extracts the number from FIL1, FIL2, etc.
+           FL = ((as.numeric(name) * 0.5) - 0.25))
+}
+
+
+ #' @title Process multiple FLP20 files into a combined data frame
+ #'
+ #' @description
+ #' Applies `flp20_to_df` to a list of file paths and combines the resulting data frames
+ #' into a single, large data frame. Each file represents individual fire events.
+ #'
+ #' @param files A character vector of paths to FLP20 .csv files.
+ #' @return A single, combined data frame containing processed data from all input files.
+ #' @importFrom dplyr bind_rows
+ #' @export
+ #'
+ #' @examples
+ #' \dontrun{
+ #' # In a real scenario, 'files' would be paths to your actual FLP20 CSV files.
+ #' # For this example, we'll create a few dummy files representing individual fires.
+ #'
+ #' temp_dir <- tempdir()
+ #' file1 <- file.path(temp_dir, "flp20_fire1.csv")
+ #' file2 <- file.path(temp_dir, "flp20_fire2.csv")
+ #'
+ #' # Create dummy data for file1 (one fire, FL bin 10)
+ #' dummy_data1 <- data.frame(
+ #'   XPos = 50, YPos = 50, PBurn = 1,
+ #'   FIL1 = 0, FIL2 = 0, FIL3 = 0, FIL4 = 0, FIL5 = 0, FIL6 = 0, FIL7 = 0, FIL8 = 0, FIL9 = 0,
+ #'   FIL10 = 1, # This fire is in FL bin 10
+ #'   FIL11 = 0, FIL12 = 0, FIL13 = 0, FIL14 = 0, FIL15 = 0, FIL16 = 0, FIL17 = 0, FIL18 = 0, FIL19 = 0, FIL20 = 0
+ #' )
+ #' write.csv(dummy_data1, file1, row.names = FALSE)
+ #'
+ #' # Create dummy data for file2 (one fire, FL bin 15)
+ #' dummy_data2 <- data.frame(
+ #'   XPos = 70, YPos = 80, PBurn = 1,
+ #'   FIL1 = 0, FIL2 = 0, FIL3 = 0, FIL4 = 0, FIL5 = 0, FIL6 = 0, FIL7 = 0, FIL8 = 0, FIL9 = 0,
+ #'   FIL10 = 0, FIL11 = 0, FIL12 = 0, FIL13 = 0, FIL14 = 0, FIL15 = 1, # This fire is in FL bin 15
+ #'   FIL16 = 0, FIL17 = 0, FIL18 = 0, FIL19 = 0, FIL20 = 0
+ #' )
+ #' write.csv(dummy_data2, file2, row.names = FALSE)
+ #'
+ #' # List of files to process
+ #' my_files <- c(file1, file2)
+ #'
+ #' # Process the files
+ #' combined_df <- flp20_to_bp_df(my_files)
+ #' print(head(combined_df))
+ #'
+ #' # Clean up dummy files
+ #' unlink(my_files)
+ #' }
+ flp20_to_bp_df <- function(files){
+
+   message('Processing files') # Changed print to message, common for package functions
+    # Using `files` parameter directly
+    fl.dfs <- lapply(files, function(x) flp20_to_df(x))
+    foo <- do.call(bind_rows, fl.dfs)
+
+    return(foo)
+  }
+
+#' @title Convert processed fire data to raster format
+#'
+#' @description
+#' Filters a data frame of fire data based on a flame length threshold,
+#' groups by spatial position (`XPos`, `YPos`), and summarizes burning probability (BP)
+#' and mean flame length (FL_mean). These summarized points are then rasterized
+#' to a reference raster. `PBurn` is treated as a count of individual fires at a location.
+#'
+#' @param df A data frame processed by `flp20_to_df` or `flp20_to_bp_df`,
+#'   containing `XPos`, `YPos`, `FL`, and `PBurn` (expected to be 1 for individual fires) columns.
+#' @param fl_threshold A numeric value representing the minimum flame length (FL)
+#'   to include in the summary.
+#' @param selected_surf A data frame or list containing a `size` column, used to
+#'   calculate the total selected surface.
+#' @param reference_surface A numeric value representing a reference surface area,
+#'   used in the BP calculation.
+#' @param r_ref A terra SpatRaster object that serves as the reference raster for
+#'   rasterization.
+#' @return A list containing two raster objects: `CBP` (Burning Probability)
+#'   and `CFL` (Mean Flame Length).
+#' @importFrom dplyr filter group_by summarise
+#' @importFrom sf st_as_sf
+#' @importFrom terra rast rasterize
+#' @export
+#'
 #' @examples
 #' \dontrun{
-#' # Assuming 'candidate_surfaces_cleansed' is a data frame with a 'path' column
-#' # and 'reference_raster' is a pre-existing terra SpatRaster object.
-#' #
-#' # # Example reference raster
-#' # library(terra)
-#' # r_ref_example <- rast(nrows=10, ncols=10, xmin=0, xmax=100, ymin=0, ymax=100,
-#' #                       crs="EPSG:25830")
-#' #
-#' # # Create a dummy directory and FLP20 file for demonstration
-#' # dummy_dir <- tempdir()
-#' # dummy_flp20_path <- file.path(dummy_dir, "Run_FLP_filtered.csv")
-#' # write.csv(data.frame(XPos=c(10,20), YPos=c(10,20),
-#' #                      FIL1=c(1,0), FIL2=c(0,1),
-#' #                      FIL3=0, FIL4=0, FIL5=0, FIL6=0, FIL7=0, FIL8=0, FIL9=0, FIL10=0,
-#' #                      FIL11=0, FIL12=0, FIL13=0, FIL14=0, FIL15=0, FIL16=0, FIL17=0,
-#' #                      FIL18=0, FIL19=0, FIL20=0),
-#' #           dummy_flp20_path, row.names = FALSE)
-#' #
-#' # # Dummy 'v' data frame
-#' # dummy_v <- data.frame(path = dummy_dir)
-#' #
-#' # flp20_raster_out <- flp20_to_raster(v = dummy_v, n = 1, r_ref = r_ref_example)
-#' # plot(flp20_raster_out, main = "FLP20 Flame Length Raster")
-#' # unlink(dummy_dir, recursive = TRUE) # Clean up dummy directory
+#' # This example requires 'terra' and 'sf' packages and typically takes longer
+#' # or needs specific spatial data.
+#'
+#' # Create dummy data frame 'df_example' to simulate output from flp20_to_df
+#' # Each row here represents an individual fire at a specific location, with its
+#' # derived FL bin value. PBurn is 1.
+#' df_example <- data.frame(
+#'   XPos = c(10, 10, 20, 20, 30, 30),
+#'   YPos = c(10, 10, 10, 20, 20, 10),
+#'   PBurn = c(1, 1, 1, 1, 1, 1), # All individual fires, PBurn = 1
+#'   # FL values derived from FIL bins (e.g., 0.25 for FIL1, 0.75 for FIL2, etc.)
+#'   FL = c(0.25, 0.75, 0.25, 1.25, 0.75, 0.75)
+#' )
+#'
+#' # Create dummy 'selected_surf' data
+#' selected_surf_example <- data.frame(size = c(1000, 2000, 500, 1500))
+#'
+#' # Define a reference surface
+#' reference_surface_example <- 10000
+#'
+#' # Create a dummy SpatRaster for r_ref
+#' # In a real scenario, this would be your actual reference raster.
+#' # Make sure the extent covers the XPos, YPos range of dummy_df
+#' r_ref_example <- terra::rast(
+#'   nrows = 3, ncols = 3,
+#'   xmin = 0, xmax = 40, ymin = 0, ymax = 30,
+#'   crs = "EPSG:4326" # Example CRS
+#' )
+#'
+#' # Run the function with example data
+#' raster_results <- fpl_to_raster(
+#'   df = df_example,
+#'   fl_threshold = 0.5, # Only include fires with FL >= 0.5 (e.g., FL 0.75 and 1.25)
+#'   selected_surf = selected_surf_example,
+#'   reference_surface = reference_surface_example,
+#'   r_ref = r_ref_example
+#' )
+#'
+#' # Print and plot the results (optional)
+#' print(raster_results$CBP)
+#' plot(raster_results$CBP, main = "CBP Raster Example")
+#' plot(raster_results$CFL, main = "CFL Raster Example")
 #' }
-flp20_to_raster <- function(v=candidate_surfaces_cleansed,n,r_ref){
+fpl_to_raster <- function(df, fl_threshold, selected_surf, reference_surface, r_ref){
 
-  # === 2. Read the CSV ===
-  df <- read_csv(paste0(v[n,]$path_rel,'/Run_FLP_filtered.csv'))
+    foo <- df |>
+      filter(FL >= fl_threshold) |> # Filter value > 0 is handled in flp20_to_df now
+      group_by(XPos, YPos) |>
+      summarise(
+        # sum(PBurn) will now effectively count fires at this location
+        BP = sum(PBurn) / (sum(selected_surf$size) / reference_surface),
+        # weighted.mean(FL, w=PBurn) becomes simple mean(FL) if PBurn is always 1
+        FL_mean = weighted.mean(FL, w = PBurn)
+      )
+    # Rasterize to the reference raster
+    points_sf <- st_as_sf(foo, coords = c("XPos", "YPos"), crs = NA)
+    bp <- rasterize(points_sf, r_ref, field = "BP", fun = "mean")
+    fl <- rasterize(points_sf, r_ref, field = "FL_mean", fun = "mean")
 
-  # === 3. Identify flame length (center of the interval)
-  fil_cols <- paste0("FIL", 1:20)
-  intervalos <- seq(0.25, 9.75, by = 0.5) 	# center of each interval
-
-  # For each row, find which FIL has value 1
-  df$llama_m <- apply(df[, fil_cols], 1, function(row) {
-    idx <- which(row == 1)
-    if (length(idx) == 1) {
-      return(intervalos[idx])
-    } else {
-      return(NA) 	# handle cases without 1s or multiple 1s
-    }
-  })
-
-  # === 4. Create a raster with the values ===
-  # Convert to SpatVector
-  v <- vect(df[, c("XPos", "YPos", "llama_m")],
-            geom = c("XPos", "YPos"),
-            crs = crs(r_ref))
-
-  # Rasterize to the reference raster
-  r_llama <- rasterize(v, r_ref, field = "llama_m", fun = "mean")
-
-  # === 5. Save output raster ===
-  # writeRaster(r_llama, paste0(v[n,]$path,'/FL.tif'), overwrite = TRUE) # Original comment
-  return(r_llama)
-}
-
-
-#' Calculate Conditional Burned Probability (CBP)
-#'
-#' This function calculates the conditional burned probability from a stack of
-#' flame length raster layers. For each pixel, it counts how many layers have
-#' a flame length value greater than a specified threshold (`FL`) and then
-#' calculates this as a proportion of the total number of layers.
-#' Non-numeric (NA) values in the raster are treated as 0 (not burned).
-#' This function is identical in its implementation to `calc_bp` but is named
-#' `calc_cbp` to reflect its specific use case for conditional probability based on flame length.
-#'
-#' @param r_stack A `terra::SpatRaster` object containing multiple layers.
-#'   Each layer typically represents fire presence/intensity (e.g., flame length).
-#' @param FL Numeric value. The flame length threshold. Pixels with values
-#'   greater than `FL` are considered burned (default is 0).
-#' @return A numeric value representing the overall conditional burned proportion
-#'   across the raster stack.
-#' @importFrom terra app nlyr
-#' @export
-#' @examples
-#' # Create a dummy raster stack for demonstration
-#' library(terra)
-#' r1 <- rast(nrows=10, ncols=10, vals=sample(0:5, 100, replace=TRUE))
-#' r2 <- rast(nrows=10, ncols=10, vals=sample(0:5, 100, replace=TRUE))
-#' r_stack_example <- c(r1, r2)
-#'
-#' # Calculate conditional burned probability with default FL=0
-#' cbp_result_0 <- calc_cbp(r_stack = r_stack_example, FL = 0)
-#' print(paste("Conditional Burned Probability (FL=0):", cbp_result_0))
-#'
-#' # Calculate conditional burned probability with FL=2
-#' cbp_result_2 <- calc_cbp(r_stack = r_stack_example, FL = 2)
-#' print(paste("Conditional Burned Probability (FL=2):", cbp_result_2))
-calc_cbp <- function(r_stack,FL=0){
-
-  r <- app(r_stack, fun = function(x) ifelse(x >= FL, 1, 0))
-  r[is.na(r)] <- 0
-
-  cbp <- sum(r)/nlyr(r)
-
-  return(cbp)
-}
+    return(list(CBP = bp, CFL = fl))
+  }
 
 #' Calculate Burned Probability (BP) from Perimeters
 #'
@@ -251,7 +275,7 @@ calc_bp <- function(template_raster,candidate_surfaces,reference_surface) {
   # 'field = NA' means it will count the occurrences of polygons
   # 'fun = "count"' counts how many polygons overlap each cell
   # 'background = 0' sets cells with no overlap to 0
-  bp <- rasterize(polygons, template_raster, field = NA, fun = "count", background = 0)
+  bp <- rasterize(polygons, template_raster, fun = "sum", background = 0)
   # Normalize the burned count by the ratio of total simulated area to reference surface
   # This scales the BP to represent probability relative to the target area
   bp <- bp/(sum(candidate_surfaces$size)/reference_surface)
