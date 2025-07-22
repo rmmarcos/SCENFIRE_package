@@ -1,9 +1,7 @@
-### Roxygen Documentation with CRAN-Ready Examples (Updated for FLP20 Structure)
-
 #' @title Convert FLP20 file to a data frame
 #'
 #' @description
-#' Reads a .csv file, typically an FLP20 output, filters for positive burning probabilities,
+#' Reads a .csv file, typically an FLP20 output from FConstMTT, for single fire event simulation,
 #' and reshapes the data to long format, calculating flame length (FL) from `FIL` columns.
 #' `PBurn` is expected to be 1 for individual fires, and `FIL` columns are binary (1 or 0).
 #'
@@ -121,7 +119,7 @@ flp20_to_df <- function(file){
     return(foo)
   }
 
-#' @title Convert processed fire data to raster format
+#' @title Convert processed FLP data to raster format
 #'
 #' @description
 #' Filters a data frame of fire data based on a flame length threshold,
@@ -148,8 +146,7 @@ flp20_to_df <- function(file){
 #'
 #' @examples
 #' \dontrun{
-#' # This example requires 'terra' and 'sf' packages and typically takes longer
-#' # or needs specific spatial data.
+#' # This example requires 'terra' and 'sf' packages.
 #'
 #' # Create dummy data frame 'df_example' to simulate output from flp20_to_df
 #' # Each row here represents an individual fire at a specific location, with its
@@ -191,7 +188,7 @@ flp20_to_df <- function(file){
 #' plot(raster_results$CBP, main = "CBP Raster Example")
 #' plot(raster_results$CFL, main = "CFL Raster Example")
 #' }
-fpl_to_raster <- function(df, fl_threshold, selected_surf, reference_surface, r_ref){
+flp20_to_raster <- function(df, fl_threshold, selected_surf, reference_surface, r_ref){
 
     foo <- df |>
       filter(FL >= fl_threshold) |> # Filter value > 0 is handled in flp20_to_df now
