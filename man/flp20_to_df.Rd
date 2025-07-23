@@ -14,7 +14,7 @@ A data frame with reshaped data, including `name` (original FIL column index)
   and `FL` (calculated flame length).
 }
 \description{
-Reads a .csv file, typically an FLP20 output, filters for positive burning probabilities,
+Reads a .csv file, typically an FLP20 output from FConstMTT, for single fire event simulation,
 and reshapes the data to long format, calculating flame length (FL) from `FIL` columns.
 `PBurn` is expected to be 1 for individual fires, and `FIL` columns are binary (1 or 0).
 }
