@@ -590,9 +590,12 @@ cleanse_duplicates <- function(candidates){
 #'
 #' visualize_selected_dist(result = selected_events_result)
 #' }
-visualize_selected_dist <- function(result = result, logaritmic = T, target_hist=target_hist, bins=bins) {
+visualize_selected_dist <- function(result = result, logaritmic = TRUE, target_hist = target_hist, bins = bins) {
 
-  # Visualization of results
+  # Calculate bin midpoints for the target histogram
+  bin_mids <- bins[-length(bins)] + (bins[2] - bins[1]) / 2
+
+  # Check if there are results to visualize
   if (!is.null(result$selected_surfaces)) {
     selected_surfaces <- result$selected_surfaces
     total_surface_selected <- result$total_surface
@@ -603,31 +606,53 @@ visualize_selected_dist <- function(result = result, logaritmic = T, target_hist
     cat("Total surface:", total_surface_selected, "\n")
     cat("Discrepancy:", final_discrepancy, "\n")
 
-    # Histogram comparison
-    # 'bins', and 'target_hist' are assumed to be available in the calling environment
-    if(logaritmic == TRUE){
-      selected_hist <- hist(log(selected_surfaces + 1e-6), breaks = bins, plot = FALSE)$density
+    # Prepare data for ggplot2
+    # Create a dataframe for selected surfaces
+    df_selected <- data.frame(
+      surface = if(logaritmic) log(selected_surfaces + 1e-6) else selected_surfaces
+    )
 
-      hist(log(selected_surfaces + 1e-6), breaks = bins, freq = FALSE, col = rgb(0, 0, 1, 0.5),
-           main = "Selected vs. Target Distribution (log-transformed)",
-           xlab = "Fire Size (log)", ylab = "Density")
-      lines(bins[-length(bins)], target_hist, type = "l", col = "red", lwd = 2)
-      legend("topright", legend = c("Selected", "Target"), fill = c(rgb(0, 0, 1, 0.5), NA), col = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
+    # Create a dataframe for the target density
+    df_target <- data.frame(
+      x = bin_mids,
+      density = target_hist
+    )
 
-    } else {
-      selected_hist <- hist((selected_surfaces), breaks = bins, plot = FALSE)$density
+    # Build the plot with ggplot2
+    p <- ggplot(df_selected, aes(x = surface)) +
+      # Layer for the histogram of selected surfaces
+      geom_histogram(aes(y = after_stat(density), fill = "Selected"),
+                     breaks = bins,
+                     color = "steelblue4", # White border between bars
+                     alpha = 0.8) +
+      # Layer for the target distribution line
+      geom_line(data = df_target, aes(x = x, y = density, color = "Target"),
+                size = 1.2) + # 'size' in ggplot2 is 'lwd' in base R
+      # Define colors for legend labels
+      scale_fill_manual(name = "Distribution",
+                        values = c("Selected" = "#799fbf"),
+                        labels = c("Selected" = "Selected")) + # Label for fill legend
+      scale_color_manual(name = "Distribution",
+                         values = c("Target" = "#a65455"),
+                         labels = c("Target" = "Target")) + # Label for color legend
+      # Titles and labels
+      labs(title = if(logaritmic) "Selected vs. Target Distribution (log-transformed)" else "Selected vs. Target Distribution",
+           x = if(logaritmic) "Fire Size (log)" else "Fire Size",
+           y = "Density") +
+      # Visual theme (optional, can be customized)
+      theme_minimal() +
+      theme(
+        plot.title = element_text(hjust = 0.5, face = "bold"), # Center and bold title
+        legend.position = "bottom", # Legend position
+        legend.title = element_blank() # Remove legend title if not needed
+      )
 
-      hist(selected_surfaces, breaks = bins, freq = FALSE, col = rgb(0, 0, 1, 0.5),
-           main = "Selected vs. Target Distribution",
-           xlab = "Fire Size", ylab = "Density")
-      lines(bins[-length(bins)], target_hist, type = "l", col = "red", lwd = 2)
-      legend("topright", legend = c("Selected", "Objetivo"), fill = c(rgb(0, 0, 1, 0.5), NA), col = c(NA, "red"), lty = c(NA, 1), lwd = c(NA, 2))
-    }
+    # Display the plot
+    print(p)
 
   } else {
     cat("Could not find a solution for the desired distribution.\n")
   }
-
 }
 
 #' Check Fire Data for Sufficiency
