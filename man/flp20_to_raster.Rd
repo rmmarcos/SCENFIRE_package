@@ -23,8 +23,8 @@ used in the BP calculation.}
 rasterization.}
 }
 \value{
-A list containing two raster objects: `CBP` (Burning Probability)
-  and `CFL` (Mean Flame Length).
+A list containing two raster objects: `CBP` (Burning Probability),
+   `CFL` (Mean Flame Length) and `ID_fires` (list of perimeter IDs).
 }
 \description{
 Filters a data frame of fire data based on a flame length threshold,

@@ -53,6 +53,7 @@ flp20_to_df <- function(file){
 
   df <- df |>
     filter(PBurn > 0) |> # Still filters for positive PBurn (e.g., PBurn = 1)
+    mutate(path=tools::file_path_sans_ext(basename(file))) |>
     pivot_longer(cols = all_of(fil_cols_present), names_to = "name", values_to = "value") |>
     # Filter out entries where FILX was 0 (i.e., this fire was not in this FL bin)
     filter(value == 1) |>
@@ -112,11 +113,11 @@ flp20_to_df <- function(file){
  flp20_to_bp_df <- function(files){
 
    message('Processing files') # Changed print to message, common for package functions
-    # Using `files` parameter directly
-    fl.dfs <- lapply(files, function(x) flp20_to_df(x))
-    foo <- do.call(bind_rows, fl.dfs)
+   # Using `files` parameter directly
+   fl.dfs <- lapply(files, function(x) flp20_to_df(x))
+   foo <- do.call(bind_rows, fl.dfs)
 
-    return(foo)
+   return(foo)
   }
 
 #' @title Convert processed FLP data to raster format and calculate conditional annual burn probability
@@ -138,8 +139,8 @@ flp20_to_df <- function(file){
 #'   used in the BP calculation.
 #' @param r_ref A terra SpatRaster object that serves as the reference raster for
 #'   rasterization.
-#' @return A list containing two raster objects: `CBP` (Burning Probability)
-#'   and `CFL` (Mean Flame Length).
+#' @return A list containing two raster objects: `CBP` (Burning Probability),
+#'    `CFL` (Mean Flame Length) and `ID_fires` (list of perimeter IDs).
 #' @importFrom dplyr filter group_by summarise
 #' @importFrom sf st_as_sf
 #' @importFrom terra rast rasterize
@@ -191,21 +192,26 @@ flp20_to_df <- function(file){
 #' }
 flp20_to_raster <- function(df, fl_threshold, selected_surf, reference_surface, r_ref){
 
-    foo <- df |>
-      filter(FL >= fl_threshold) |> # Filter value > 0 is handled in flp20_to_df now
-      group_by(XPos, YPos) |>
-      summarise(
-        # sum(PBurn) will now effectively count fires at this location
-        BP = sum(PBurn) / ((sum(selected_surf$size) / reference_surface)),
-        # weighted.mean(FL, w=PBurn) becomes simple mean(FL) if PBurn is always 1
-        FL_mean = weighted.mean(FL, w = PBurn)
-      )
-    # Rasterize to the reference raster
-    points_sf <- st_as_sf(foo, coords = c("XPos", "YPos"), crs = NA)
-    bp <- rasterize(points_sf, r_ref, field = "BP", fun = "mean")
-    fl <- rasterize(points_sf, r_ref, field = "FL_mean", fun = "mean")
+  foo <- df |>
+    filter(FL >= fl_threshold) |>
+    mutate(ID_fire = str_split_i(path, '_', 6))
 
-    return(list(CBP = bp, CFL = fl))
+  list.fires <- unique(foo$ID_fire)
+
+  foo <- foo |> # Filter value > 0 is handled in flp20_to_df now
+    group_by(XPos, YPos) |>
+    summarise(
+      # sum(PBurn) will now effectively count fires at this location
+      BP = sum(PBurn) / ((sum(selected_surf$size) / reference_surface)),
+      # weighted.mean(FL, w=PBurn) becomes simple mean(FL) if PBurn is always 1
+      FL_mean = weighted.mean(FL, w = PBurn)
+    )
+  # Rasterize to the reference raster
+  points_sf <- st_as_sf(foo, coords = c("XPos", "YPos"), crs = NA)
+  bp <- rasterize(points_sf, r_ref, field = "BP", fun = "mean")
+  fl <- rasterize(points_sf, r_ref, field = "FL_mean", fun = "mean")
+
+  return(list(CBP = bp, CFL = fl, ID_fires = list.fires))
   }
 
 #' Calculate annual burned probability (BP) from perimeters
