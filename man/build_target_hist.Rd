@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_distribution.R
 \name{build_target_hist}
 \alias{build_target_hist}
-\title{Function to obtain the target histogram}
+\title{Function to obtain the target histogram from a vector of fire size data}
 \usage{
 build_target_hist(num_bins = 20, logaritmic = T, sizes, event_surfaces)
 }

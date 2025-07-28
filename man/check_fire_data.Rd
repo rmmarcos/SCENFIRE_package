@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_distribution.R
 \name{check_fire_data}
 \alias{check_fire_data}
-\title{Check Fire Data for Sufficiency}
+\title{Check fire data for sufficiency}
 \usage{
 check_fire_data(fires_hist_size, sim_perimeters_size, n_years)
 }

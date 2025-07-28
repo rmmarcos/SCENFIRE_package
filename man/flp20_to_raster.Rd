@@ -2,7 +2,7 @@
 % Please edit documentation in R/calc_burn_probability.R
 \name{flp20_to_raster}
 \alias{flp20_to_raster}
-\title{Convert processed FLP data to raster format}
+\title{Convert processed FLP data to raster format and calculate conditional annual burn probability}
 \usage{
 flp20_to_raster(df, fl_threshold, selected_surf, reference_surface, r_ref)
 }
@@ -28,8 +28,9 @@ A list containing two raster objects: `CBP` (Burning Probability)
 }
 \description{
 Filters a data frame of fire data based on a flame length threshold,
-groups by spatial position (`XPos`, `YPos`), and summarizes burning probability (BP)
-and mean flame length (FL_mean). These summarized points are then rasterized
+groups by spatial position (`XPos`, `YPos`), and summarizes it into
+conditional annual burning probability (CBP) estimates and
+mean flame length (FL_mean). These summarized points are then rasterized
 to a reference raster. `PBurn` is treated as a count of individual fires at a location.
 }
 \examples{

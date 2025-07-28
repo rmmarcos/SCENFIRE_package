@@ -59,7 +59,7 @@ A list containing the best selection found across all iterations:
 Selects a subset of simulated fire perimeters by matching their surface
 distribution to a predefined target histogram. The selection is iterative
 and probabilistic, aiming to minimize the discrepancy while accumulating
-a total surface area above a certain threshold.
+a total surface area above a certain threshold (e.g., mean annul burned area).
 }
 \examples{
 \dontrun{

@@ -2,11 +2,11 @@
 % Please edit documentation in R/create_distribution.R
 \name{visualize_selected_dist}
 \alias{visualize_selected_dist}
-\title{Visualize Selected Fire Perimeter Distribution}
+\title{Visualize selected fire perimeter distribution}
 \usage{
 visualize_selected_dist(
   result = result,
-  logaritmic = T,
+  logaritmic = TRUE,
   target_hist = target_hist,
   bins = bins
 )

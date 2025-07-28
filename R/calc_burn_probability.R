@@ -119,12 +119,13 @@ flp20_to_df <- function(file){
     return(foo)
   }
 
-#' @title Convert processed FLP data to raster format
+#' @title Convert processed FLP data to raster format and calculate conditional annual burn probability
 #'
 #' @description
 #' Filters a data frame of fire data based on a flame length threshold,
-#' groups by spatial position (`XPos`, `YPos`), and summarizes burning probability (BP)
-#' and mean flame length (FL_mean). These summarized points are then rasterized
+#' groups by spatial position (`XPos`, `YPos`), and summarizes it into
+#' conditional annual burning probability (CBP) estimates and
+#' mean flame length (FL_mean). These summarized points are then rasterized
 #' to a reference raster. `PBurn` is treated as a count of individual fires at a location.
 #'
 #' @param df A data frame processed by `flp20_to_df` or `flp20_to_bp_df`,
@@ -195,7 +196,7 @@ flp20_to_raster <- function(df, fl_threshold, selected_surf, reference_surface, 
       group_by(XPos, YPos) |>
       summarise(
         # sum(PBurn) will now effectively count fires at this location
-        BP = sum(PBurn) / (sum(selected_surf$size) / reference_surface),
+        BP = sum(PBurn) / ((sum(selected_surf$size) / reference_surface)),
         # weighted.mean(FL, w=PBurn) becomes simple mean(FL) if PBurn is always 1
         FL_mean = weighted.mean(FL, w = PBurn)
       )
@@ -207,7 +208,7 @@ flp20_to_raster <- function(df, fl_threshold, selected_surf, reference_surface, 
     return(list(CBP = bp, CFL = fl))
   }
 
-#' Calculate Burned Probability (BP) from Perimeters
+#' Calculate annual burned probability (BP) from perimeters
 #'
 #' This function calculates the burned probability raster from a set of
 #' simulated fire perimeters. It first converts the perimeters into a `terra`
@@ -261,7 +262,7 @@ flp20_to_raster <- function(df, fl_threshold, selected_surf, reference_surface, 
 #'
 #' plot(bp_raster, main = "Burned Probability Raster")
 #' }
-calc_bp <- function(template_raster,candidate_surfaces,reference_surface) {
+calc_abp <- function(template_raster,candidate_surfaces,reference_surface) {
 
   # Convert sf object to terra SpatVector
   polygons <- vect(candidate_surfaces)

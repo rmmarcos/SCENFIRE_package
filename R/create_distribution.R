@@ -1,4 +1,4 @@
-#' Function to build power law distribution
+#' Function to build power law distribution to fit a theortical target histogram
 #'
 #' Generates random numbers that follow a truncated power-law distribution.
 #' This function uses the inverse cumulative distribution function (CDF)
@@ -24,7 +24,7 @@ fit_powerlaw <- function(n=100, alpha=1.5, xmin, xmax) {
   return((r * C + xmin^(1 - alpha))^(1 / (1 - alpha)))
 }
 
-#' Function to obtain the target histogram
+#' Function to obtain the target histogram from a vector of fire size data
 #'
 #' This function builds a histogram (specifically, its density) from a set of
 #' fire sizes, which is intended to represent a target distribution (e.g., from
@@ -183,7 +183,7 @@ calculate_discrepancy <- function(selected_surfaces, target_hist, bins, logaritm
 #' Selects a subset of simulated fire perimeters by matching their surface
 #' distribution to a predefined target histogram. The selection is iterative
 #' and probabilistic, aiming to minimize the discrepancy while accumulating
-#' a total surface area above a certain threshold.
+#' a total surface area above a certain threshold (e.g., mean annul burned area).
 #'
 #' @param event_sizes Numeric vector of surface values for all available
 #'   simulated events.
@@ -505,7 +505,7 @@ cleanse_duplicates <- function(candidates){
   return(candidate_surfaces)
 }
 
-#' Visualize Selected Fire Perimeter Distribution
+#' Visualize selected fire perimeter distribution
 #'
 #' This function generates a histogram comparing the distribution of selected
 #' fire surfaces (e.g., areas) with a predefined target distribution. It also
@@ -649,13 +649,14 @@ visualize_selected_dist <- function(result = result, logaritmic = TRUE, target_h
 
     # Display the plot
     print(p)
+    return(p)
 
   } else {
     cat("Could not find a solution for the desired distribution.\n")
   }
 }
 
-#' Check Fire Data for Sufficiency
+#' Check fire data for sufficiency
 #'
 #' This function assesses whether the available simulated fire perimeters are
 #' sufficient in terms of maximum fire size and total burned area, relative

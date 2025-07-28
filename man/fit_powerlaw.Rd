@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_distribution.R
 \name{fit_powerlaw}
 \alias{fit_powerlaw}
-\title{Function to build power law distribution}
+\title{Function to build power law distribution to fit a theortical target histogram}
 \usage{
 fit_powerlaw(n = 100, alpha = 1.5, xmin, xmax)
 }
