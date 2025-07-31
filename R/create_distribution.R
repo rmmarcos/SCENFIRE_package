@@ -300,6 +300,7 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
               best_discrepancy <- Inf
 
               for (i in 1:max_it) {
+                n_iter <- 0
                 # Use tryCatch to handle potential errors
                 result <- tryCatch({
                   selected_surfaces <- c()
@@ -331,6 +332,9 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
                       eligible_indices <- setdiff(eligible_indices, selected_indices_global) 	# Exclude already selected
 
                       while (length(eligible_indices) > 0) {
+
+                        if(n_iter>100000){break}
+
                         if (length(eligible_indices) == 1) {
                           selected_index <- eligible_indices[1] 	# Direct selection if only one eligible index
                         } else if (length(eligible_indices) > 1) {
