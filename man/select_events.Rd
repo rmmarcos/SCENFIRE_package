@@ -13,6 +13,7 @@ select_events(
   surface_threshold,
   tolerance,
   max_it = 5,
+  iter_limit = 1e+05,
   logaritmic = T
 )
 }
@@ -38,6 +39,8 @@ the current implementation finds the best discrepancy, not necessarily stopping
 once tolerance is met, but aims for the minimum).}
 
 \item{max_it}{Integer for the maximum number of iterations for the inner loop (default: 100).}
+
+\item{iter_limit}{Integer for the maximum number of iterations in selection (default: 100000).}
 
 \item{logaritmic}{Logical. If `TRUE`, a logarithmic transformation is applied
 to `event_surfaces` before binning and to `selected_surfaces` for histogram

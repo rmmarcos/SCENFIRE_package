@@ -333,7 +333,10 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
 
                       while (length(eligible_indices) > 0) {
 
-                        if(n_iter>100000){break}
+                        if(n_iter>100000){
+                          cat("Maximum iterations where reached. Execution interrumpted.")
+                          break
+                        }
 
                         if (length(eligible_indices) == 1) {
                           selected_index <- eligible_indices[1] 	# Direct selection if only one eligible index
