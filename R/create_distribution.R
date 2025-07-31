@@ -199,6 +199,7 @@ calculate_discrepancy <- function(selected_surfaces, target_hist, bins, logaritm
 #'   the current implementation finds the best discrepancy, not necessarily stopping
 #'   once tolerance is met, but aims for the minimum).
 #' @param max_it Integer for the maximum number of iterations for the inner loop (default: 100).
+#' @param iter_limit Integer for the maximum number of iterations in selection (default: 100000).
 #' @param logaritmic Logical. If `TRUE`, a logarithmic transformation is applied
 #'   to `event_surfaces` before binning and to `selected_surfaces` for histogram
 #'   calculations (default: `TRUE`).
@@ -265,7 +266,7 @@ calculate_discrepancy <- function(selected_surfaces, target_hist, bins, logaritm
 #' # stopImplicitCluster()
 #' }
 select_events <- function(event_sizes, event_probabilities, target_hist, bins,
-                          reference_surface, surface_threshold, tolerance, max_it = 5, logaritmic = T) {
+                          reference_surface, surface_threshold, tolerance, max_it = 5, iter_limit=100000,logaritmic = T) {
 
   num_cores <- max_it  # Número de núcleos a usar (idealmente todos menos uno)
   cl <- makeCluster(num_cores)
@@ -323,6 +324,12 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
                   selected_indices_global <- c()
 
                   while ((total_surface < reference_surface * surface_threshold)) {
+
+                    if(n_iter>iter_limit){
+                      cat("Maximum iterations where reached. Execution interrumpted. Increase iter_limit.")
+                      break
+                    }
+
                     # Probabilistic selection based on bin priority
                     if (any(bin_priorities > 0)) { 	# Only select if there is any bin with positive priority
                       selected_bin <- sample(1:length(bin_priorities), 1, prob = bin_priorities + 1e-6)
@@ -333,8 +340,8 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
 
                       while (length(eligible_indices) > 0) {
 
-                        if(n_iter>100000){
-                          cat("Maximum iterations where reached. Execution interrumpted.")
+                        if(n_iter>iter_limit){
+                          cat("Maximum iterations where reached. Execution interrumpted. Increase iter_limit.")
                           break
                         }
 
