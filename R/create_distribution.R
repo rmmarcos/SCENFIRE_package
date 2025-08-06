@@ -266,15 +266,16 @@ calculate_discrepancy <- function(selected_surfaces, target_hist, bins, logaritm
 #' # stopImplicitCluster()
 #' }
 select_events <- function(event_sizes, event_probabilities, target_hist, bins,
-                          reference_surface, surface_threshold, tolerance, max_it = 5, iter_limit=100000,logaritmic = T) {
+                          reference_surface, surface_threshold, tolerance, max_it = 5,
+                          iter_limit=100000,logaritmic = T) {
 
-  num_cores <- max_it  # Número de núcleos a usar (idealmente todos menos uno)
+  num_cores <- max_it  # N�mero de n�cleos a usar (idealmente todos menos uno)
   cl <- makeCluster(num_cores)
   registerDoParallel(cl)
 
   event_surfaces <- event_sizes
 
-  # Exporta variables y funciones necesarias al clúster paralelo
+  # Exporta variables y funciones necesarias al cl�ster paralelo
   clusterExport(cl, list("calculate_discrepancy",
                          "event_surfaces",
                          "event_probabilities",
@@ -299,9 +300,11 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
 
               best_selection <- NULL
               best_discrepancy <- Inf
+              n_iter <- 0
+              status <- "Completed correctly"
 
               for (i in 1:max_it) {
-                n_iter <- 0
+
                 # Use tryCatch to handle potential errors
                 result <- tryCatch({
                   selected_surfaces <- c()
@@ -326,6 +329,7 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
                   while ((total_surface < reference_surface * surface_threshold)) {
 
                     if(n_iter>iter_limit){
+                      status <- "Interrupted early"
                       cat("Maximum iterations where reached. Execution interrumpted. Increase iter_limit.")
                       break
                     }
@@ -341,6 +345,7 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
                       while (length(eligible_indices) > 0) {
 
                         if(n_iter>iter_limit){
+                          status <- "Interrupted early"
                           cat("Maximum iterations where reached. Execution interrumpted. Increase iter_limit.")
                           break
                         }
@@ -349,6 +354,7 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
                           selected_index <- eligible_indices[1] 	# Direct selection if only one eligible index
                         } else if (length(eligible_indices) > 1) {
                           selected_index <- sample(eligible_indices, 1, prob = event_probabilities[eligible_indices])
+                          n_iter <- n_iter + 1
                         } else {
                           break 	# Exit if no eligible indices
                         }
@@ -382,6 +388,8 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
                             break
                           }
                         }
+
+                        # n_iter <- n_iter + 1
                       }
                     } else {
                       break 	# Exit if no bins with priority
@@ -399,7 +407,8 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
                       selected_surfaces = selected_surfaces,
                       surface_index = surface_index,
                       total_surface = total_surface,
-                      final_discrepancy = final_discrepancy
+                      final_discrepancy = final_discrepancy,
+                      run_status = status
                     )
                     best_discrepancy <- final_discrepancy
                   }
@@ -456,313 +465,3 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
 
 }
 
-#' Function to remove duplicated perimeters
-#'
-#' This function iteratively checks for and removes duplicated geometries from an
-#' `sf` object containing fire perimeters. Duplicates are identified using
-#' `sf::st_equals()`. The process repeats until no more geometrically identical
-#' polygons are found.
-#'
-#' @param candidates An `sf` object (simple features) containing fire perimeters.
-#' @return An `sf` object with all geometrically duplicated perimeters removed.
-#' @importFrom sf st_equals
-#' @importFrom methods is
-#' @export
-#' @examples
-#' \dontrun{
-#' # Create a dummy sf object with some duplicated geometries for demonstration
-#' library(sf)
-#' library(dplyr)
-#' polygon1 <- st_polygon(list(cbind(c(0,0,1,1,0), c(0,1,1,0,0))))
-#' polygon2 <- st_polygon(list(cbind(c(1,1,2,2,1), c(1,2,2,1,1))))
-#' # Duplicate of polygon1
-#' polygon1_dup <- st_polygon(list(cbind(c(0,0,1,1,0), c(0,1,1,0,0))))
-#'
-#' dummy_perimeters <- st_sf(
-#'   id = 1:4,
-#'   geometry = st_sfc(polygon1, polygon2, polygon1_dup, st_polygon(list(cbind(c(3,3,4,4,3), c(3,4,4,3,3))))),
-#'   crs = 25830
-#' )
-#'
-#' print("Original perimeters with potential duplicates:")
-#' print(dummy_perimeters)
-#'
-#' cleaned_perimeters <- cleanse_duplicates(candidates = dummy_perimeters)
-#'
-#' print("Perimeters after cleansing duplicates:")
-#' print(cleaned_perimeters)
-#' }
-cleanse_duplicates <- function(candidates){
-
-  candidate_surfaces <- candidates
-
-  duplicate_indices <- list(-1)
-
-  while(length(duplicate_indices)>0){
-    # Comprobar si las geometrías están repetidas
-    duplicates <- st_equals(candidate_surfaces)
-
-    # Mostrar índices de geometrías duplicadas
-    duplicate_indices <- which(sapply(duplicates, length) > 1)
-
-    # Imprimir los resultados
-    if (length(duplicate_indices) > 0) {
-      print("Se encontraron polígonos duplicados en los siguientes índices:\n")
-      print(duplicate_indices)
-      candidate_surfaces <- candidate_surfaces[-duplicate_indices,]
-    } else {
-      print("No se encontraron polígonos duplicados.\n")
-    }
-
-  }
-
-  return(candidate_surfaces)
-}
-
-#' Visualize selected fire perimeter distribution
-#'
-#' This function generates a histogram comparing the distribution of selected
-#' fire surfaces (e.g., areas) with a predefined target distribution. It also
-#' prints key statistics about the selection, such as the number of events,
-#' total surface area, and the discrepancy with the target. The visualization
-#' automatically adapts to whether a logarithmic transformation was used.
-#'
-#' @param result A list object, typically the output from the `select_events` function.
-#'   It is expected to contain at least the following elements:
-#'   \describe{
-#'     \item{selected_surfaces}{Numeric vector of surface values for the selected events.}
-#'     \item{total_surface}{Numeric value representing the sum of surface areas of the selected events.}
-#'     \item{final_discrepancy}{Numeric value representing the final discrepancy metric for the selection.}
-#'   }
-#' @param logaritmic Logical (assumed to be available in the calling environment).
-#'   If `TRUE`, it indicates that a logarithmic transformation was applied to the
-#'   fire sizes during the selection process and should be used for visualization.
-#'   If `FALSE`, the original scale is used.
-#' @param bins Numeric vector (assumed to be available in the calling environment).
-#'   The breakpoints for the histogram bins. This should be consistent with the
-#'   `bins` output from `build_target_hist`.
-#' @param target_hist Numeric vector (assumed to be available in the calling environment).
-#'   The density values of the target histogram, typically obtained from `build_target_hist`.
-#' @return This function does not return a value. It produces a plot as a side effect
-#'   and prints information to the console.
-#' @importFrom graphics hist lines legend par
-#' @export
-#' @examples
-#' \dontrun{
-#' # This example requires the 'foreach' package and a parallel backend (e.g., 'doParallel')
-#' # to be set up.
-#' # library(doParallel)
-#'
-#' # Dummy data for demonstration (replace with your actual data)
-#' set.seed(123)
-#' historical_data_for_target <- floor(fit_powerlaw(n = 500, alpha = 2, xmin = 10, xmax = 10000))
-#' event_surfaces <- fit_powerlaw(n = 10000, alpha = 2, xmin = 10, xmax = 10000)
-#' # Discard simulated fires that are too large (below 110% max historical size)
-#' event_surfaces <- event_surfaces[event_surfaces<max(historical_data_for_target)*1.1]
-#' event_probabilities <- rnorm(length(event_surfaces))
-#' event_probabilities <- (event_probabilities-min(event_probabilities))/(max(event_probabilities)-min(event_probabilities))
-#'
-#' y <- 100 #number of years spanning historical fire data
-#' check_fire_data(fires_hist_size = historical_data_for_target,
-#'                 sim_perimeters_size = event_surfaces,
-#'                 n_years = y)
-#'
-#' reference_surface_example <- sum(historical_data_for_target)/y
-#' surface_threshold_example <- check_fire_data(fires_hist_size = historical_data_for_target,
-#'                                              sim_perimeters_size = event_surfaces,
-#'                                              n_years = 10)
-#' tolerance_example <- 0.1
-#'
-#' # Create a dummy target histogram (assuming 'event_surfaces' from historical data)
-#' # For a real scenario, 'event_surfaces' here would be your historical fire sizes.
-#'
-#' target_info_example <- build_target_hist(num_bins = 10, logaritmic = TRUE,
-#'                                          sizes = historical_data_for_target,
-#'                                          event_surfaces = event_surfaces)
-#' target_hist <- target_info_example$target_hist
-#' bins <- target_info_example$bins
-#'
-#' # Run the selection process
-#' selected_events_result <- select_events(
-#'   event_sizes = event_surfaces,
-#'   event_probabilities = event_probabilities,
-#'   target_hist = target_hist,
-#'   bins = bins,
-#'   reference_surface = reference_surface_example,
-#'   surface_threshold = surface_threshold_example,
-#'   tolerance = tolerance_example,
-#'   max_it = 2 # Reduced iterations for example
-#' )
-#'
-#' visualize_selected_dist(result = selected_events_result,
-#'   logaritmic = T,
-#'   target_hist = target_hist,
-#'   bins = bins)
-#'
-#' # Stop the parallel cluster when done
-#' # stopImplicitCluster()
-#'
-#' visualize_selected_dist(result = selected_events_result)
-#' }
-visualize_selected_dist <- function(result = result, logaritmic = TRUE, target_hist = target_hist, bins = bins) {
-
-  # Calculate bin midpoints for the target histogram
-  bin_mids <- bins[-length(bins)] + (bins[2] - bins[1]) / 2
-
-  # Check if there are results to visualize
-  if (!is.null(result$selected_surfaces)) {
-    selected_surfaces <- result$selected_surfaces
-    total_surface_selected <- result$total_surface
-    final_discrepancy <- result$final_discrepancy
-
-    # Display statistics about the selected events
-    cat("Number of selected events:", length(selected_surfaces), "\n")
-    cat("Total surface:", total_surface_selected, "\n")
-    cat("Discrepancy:", final_discrepancy, "\n")
-
-    # Prepare data for ggplot2
-    # Create a dataframe for selected surfaces
-    df_selected <- data.frame(
-      surface = if(logaritmic) log(selected_surfaces + 1e-6) else selected_surfaces
-    )
-
-    # Create a dataframe for the target density
-    df_target <- data.frame(
-      x = bin_mids,
-      density = target_hist
-    )
-
-    # Build the plot with ggplot2
-    p <- ggplot(df_selected, aes(x = surface)) +
-      # Layer for the histogram of selected surfaces
-      geom_histogram(aes(y = after_stat(density), fill = "Selected"),
-                     breaks = bins,
-                     color = "steelblue4", # White border between bars
-                     alpha = 0.8) +
-      # Layer for the target distribution line
-      geom_line(data = df_target, aes(x = x, y = density, color = "Target"),
-                size = 1.2) + # 'size' in ggplot2 is 'lwd' in base R
-      # Define colors for legend labels
-      scale_fill_manual(name = "Distribution",
-                        values = c("Selected" = "#799fbf"),
-                        labels = c("Selected" = "Selected")) + # Label for fill legend
-      scale_color_manual(name = "Distribution",
-                         values = c("Target" = "#a65455"),
-                         labels = c("Target" = "Target")) + # Label for color legend
-      # Titles and labels
-      labs(title = if(logaritmic) "Selected vs. Target Distribution (log-transformed)" else "Selected vs. Target Distribution",
-           x = if(logaritmic) "Fire Size (log)" else "Fire Size",
-           y = "Density") +
-      # Visual theme (optional, can be customized)
-      theme_minimal() +
-      theme(
-        plot.title = element_text(hjust = 0.5, face = "bold"), # Center and bold title
-        legend.position = "bottom", # Legend position
-        legend.title = element_blank() # Remove legend title if not needed
-      )
-
-    # Display the plot
-    print(p)
-    return(p)
-
-  } else {
-    cat("Could not find a solution for the desired distribution.\n")
-  }
-}
-
-#' Check fire data for sufficiency
-#'
-#' This function assesses whether the available simulated fire perimeters are
-#' sufficient in terms of maximum fire size and total burned area, relative
-#' to historical fire data. It provides messages to the user if deficiencies
-#' are found and, if data is sufficient, calculates and recommends a surface
-#' threshold for selecting events.
-#'
-#' @param fires_hist_size Numeric vector. A vector of historical fire sizes (e.g., areas in hectares).
-#' @param sim_perimeters_size Numeric vector. A vector of simulated fire perimeter sizes (e.g., areas in hectares).
-#' @param n_years Integer. The number of years represented by the historical fire data.
-#' @return If simulated data is sufficient, returns an integer representing a
-#'   recommended surface threshold (typically 10% of the maximum possible threshold).
-#'   Otherwise, returns `NULL` (invisibly, as it only prints messages) if
-#'   simulated data is deemed insufficient.
-#' @seealso \code{\link{get_select_params}}
-#' @export
-#' @examples
-#' # Example 1: Simulated fires are too small and not enough area
-#' check_fire_data(fires_hist_size = c(100, 500, 1000, 2000),
-#'                 sim_perimeters_size = c(10, 50, 80, 120),
-#'                 n_years = 1)
-#'
-#' # Example 2: Simulated fires are sufficient
-#' check_fire_data(fires_hist_size = c(100, 500, 1000, 2000),
-#'                 sim_perimeters_size = c(10, 50, 80, 120, 500, 1500, 2500, 5000),
-#'                 n_years = 1)
-#'
-#' # Example 3: Insufficient area, but max size is okay
-#' check_fire_data(fires_hist_size = c(100, 500, 1000, 2000),
-#'                 sim_perimeters_size = c(10, 50, 80, 120, 500, 1500),
-#'                 n_years = 10)
-#' # Example 4: Correct data
-#'check_fire_data(fires_hist_size = c(1, 5, 10, 600),
-#'                sim_perimeters_size = c(10, 50, 80, 120, 500, 2500),
-#'                n_years = 10)
-check_fire_data <- function(fires_hist_size, sim_perimeters_size, n_years) {
-
-  size_check <- max(fires_hist_size) > max(sim_perimeters_size)
-  area_check <- sum(fires_hist_size) > sum(sim_perimeters_size)
-
-  if(size_check) {print("Simulated fires are too small. Consider running extra simulations or trim historical fires to match.")}
-  if(area_check) {print("Not enough simulated fires. Extra simulations are needed.")}
-
-  if(!size_check & !area_check){
-
-    st <- get_select_params(fires_hist_size, sim_perimeters_size, n_years)
-    num_seasons <- floor(st*0.1)
-
-    if(num_seasons>0){
-
-      cat("Sufficient simulated perimeters and burned area. Maximum surface threshold: ",
-          st,".\n Recommended surface threshold: ",floor(st*0.1), "\n")
-
-      return(num_seasons)
-
-    }else{"Not enough simulated fires. Extra simulations are needed."}
-
-  }
-
-}
-
-#' Get Selection Parameters
-#'
-#' Calculates a parameter for event selection based on the total area of
-#' historical fires (normalized by number of years) and the total area of
-#' simulated fire perimeters. This parameter can be used to determine a
-#' maximum surface threshold for selecting a subset of simulated events.
-#'
-#' @param fires_hist_size Numeric vector. A vector of historical fire sizes.
-#' @param sim_perimeters_size Numeric vector. A vector of simulated fire perimeter sizes.
-#' @param n_years Integer. The number of years covered by the historical fire data.
-#' @return An integer representing the ratio of total simulated area to the
-#'   annual average historical area. This value can be interpreted as the
-#'   maximum number of historical fire "equivalents" that can be formed from
-#'   the simulated data.
-#' @seealso \code{\link{check_fire_data}}
-#' @export
-#' @examples
-#' # Calculate selection parameter for a scenario where simulated data
-#' # covers 10 times the annual historical area.
-#' get_select_params(fires_hist_size = c(100, 500, 1000),
-#'                   sim_perimeters_size = c(1000, 2000, 3000, 4000, 5000),
-#'                   n_years = 1)
-#'
-#' # If historical data represents 10 years
-#' get_select_params(fires_hist_size = c(100, 500, 1000),
-#'                   sim_perimeters_size = c(1000, 2000, 3000, 4000, 5000),
-#'                   n_years = 10)
-get_select_params <- function(fires_hist_size, sim_perimeters_size, n_years) {
-
-  area_hist <- sum(fires_hist_size) / n_years
-  area_sim <- sum(sim_perimeters_size)
-  return(floor(area_sim/area_hist))
-
-}
