@@ -465,3 +465,247 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
 
 }
 
+#' Visualize Selected vs. Target Fire Size Distribution
+#'
+#' Esta función genera un gráfico comparando la distribución de los
+#' tamaños de incendio seleccionados con una distribución objetivo.
+#' Permite aplicar transformación logarítmica a los tamaños seleccionados
+#' y visualizar ambas distribuciones de manera conjunta.
+#'
+#' @param result Lista devuelta por un modelo o proceso de selección
+#'   que debe contener al menos:
+#'   \describe{
+#'     \item{selected_surfaces}{Vector numérico con los tamaños de superficie seleccionados.}
+#'     \item{total_surface}{Valor numérico con la superficie total seleccionada.}
+#'     \item{final_discrepancy}{Valor numérico con la discrepancia final respecto a la distribución objetivo.}
+#'   }
+#' @param logaritmic Lógico. Si \code{TRUE}, los tamaños seleccionados se transforman logarítmicamente
+#'   antes de graficar. Por defecto \code{TRUE}.
+#' @param target_hist Vector numérico con las densidades de la distribución objetivo,
+#'   correspondiente a los puntos medios de los intervalos definidos en \code{bins}.
+#' @param bins Vector numérico con los límites de los intervalos (breaks) usados
+#'   para construir el histograma.
+#'
+#' @return Un objeto \code{ggplot} que representa la comparación entre la distribución
+#' seleccionada y la distribución objetivo. Además, la función imprime en consola:
+#' \itemize{
+#'   \item Número de eventos seleccionados.
+#'   \item Superficie total seleccionada.
+#'   \item Discrepancia respecto a la distribución objetivo.
+#' }
+#' Si no se encuentra una solución, devuelve un mensaje y no genera gráfico.
+#'
+#' @examples
+#' \dontrun{
+#' # Use example for select_events
+#' visualize_selected_dist(result, logaritmic = TRUE,
+#'                         target_hist = target_hist, bins = bins)
+#' }
+#'
+#' @import ggplot2
+#' @export
+visualize_selected_dist <- function(result = result, logaritmic = TRUE,
+                                    target_hist = target_hist, bins = bins) {
+
+  bin_mids <- bins[-length(bins)] + (bins[2] - bins[1])/2
+
+  if (!is.null(result$selected_surfaces)) {
+    selected_surfaces <- result$selected_surfaces
+    total_surface_selected <- result$total_surface
+    final_discrepancy <- result$final_discrepancy
+    cat("Number of selected events:", length(selected_surfaces),
+        "\n")
+    cat("Total surface:", total_surface_selected, "\n")
+    cat("Discrepancy:", final_discrepancy, "\n")
+    df_selected <- data.frame(surface = if (logaritmic)
+      log(selected_surfaces + 1e-06)
+      else selected_surfaces)
+    df_target <- data.frame(x = bin_mids, density = target_hist)
+    p <- ggplot(df_selected, aes(x = surface)) + geom_histogram(aes(y = after_stat(density),
+                                                                    fill = "Selected"), breaks = bins, color = "steelblue4",
+                                                                alpha = 0.8) + geom_line(data = df_target, aes(x = x,
+                                                                                                               y = density, color = "Target"), size = 1.2) +
+      scale_fill_manual(name = "Distribution", values = c(Selected = "#799fbf"),
+                        labels = c(Selected = "Selected")) + scale_color_manual(name = "Distribution",
+                                                                                values = c(Target = "#a65455"), labels = c(Target = "Target")) +
+      labs(title = if (logaritmic)
+        "Selected vs. Target Distribution (log-transformed)"
+        else "Selected vs. Target Distribution", x = if (logaritmic)
+          "Fire Size (log)"
+        else "Fire Size", y = "Density") + theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+            legend.position = "bottom", legend.title = element_blank())
+    print(p)
+    return(p)
+  }
+  else {
+    cat("Could not find a solution for the desired distribution.\n")
+  }
+}
+
+#' Get Selection Parameters for Fire Simulations
+#'
+#' This function calculates a selection parameter that represents how many times
+#' the simulated burned area covers, on average, the historical annual burned area.
+#'
+#' @param fires_hist_size Numeric vector of historical fire sizes.
+#' @param sim_perimeters_size Numeric vector of simulated fire sizes.
+#' @param n_years Integer. Number of years considered in the historical dataset.
+#'
+#' @return An integer value representing the ratio between the total simulated area
+#' and the average annual historical burned area.
+#' Larger values indicate that the simulation covers several historical fire seasons.
+#'
+#' @details
+#' The parameter is calculated as:
+#' \deqn{ \text{param} = \left\lfloor \frac{\sum(\text{sim\_perimeters\_size})}{\sum(\text{fires\_hist\_size}) / n\_years} \right\rfloor }
+#'
+#' Where:
+#' \itemize{
+#'   \item \eqn{\sum(\text{fires\_hist\_size}) / n\_years} = average historical burned area per year.
+#'   \item \eqn{\sum(\text{sim\_perimeters\_size})} = total simulated burned area.
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' # Example with toy data
+#' hist_sizes <- c(100, 200, 150, 300)
+#' sim_sizes  <- c(80, 120, 200, 250, 300)
+#'
+#' get_select_params(fires_hist_size = hist_sizes,
+#'                   sim_perimeters_size = sim_sizes,
+#'                   n_years = 4)
+#' }
+#'
+#' @seealso [check_fire_data]
+#'
+#' @export
+get_select_params <- function(fires_hist_size, sim_perimeters_size, n_years) {
+  area_hist <- sum(fires_hist_size) / n_years
+  area_sim <- sum(sim_perimeters_size)
+  return(floor(area_sim / area_hist))
+}
+
+
+#' Check Consistency of Historical vs. Simulated Fire Data
+#'
+#' This function compares historical fire sizes with simulated fire sizes
+#' to assess whether the simulations are sufficient in terms of
+#' maximum burned area and total burned area.
+#' If the simulated fires are not adequate, the function prints guidance
+#' messages suggesting additional simulations or adjustments.
+#'
+#' @param fires_hist_size Numeric vector of historical fire sizes.
+#' @param sim_perimeters_size Numeric vector of simulated fire sizes.
+#' @param n_years Integer. Number of years represented in the simulation.
+#'
+#' @return
+#' If the simulated fires are sufficient, returns an integer representing
+#' the recommended surface threshold (in number of seasons).
+#' If the simulations are not sufficient, prints diagnostic messages
+#' and returns nothing.
+#'
+#' @details
+#' The function checks:
+#' \itemize{
+#'   \item Maximum fire size in historical vs. simulated data.
+#'   \item Total burned area in historical vs. simulated data.
+#' }
+#'
+#' If both criteria are satisfied, it calculates a recommended threshold
+#' using \code{\link{get_select_params}}.
+#'
+#' @examples
+#' \dontrun{
+#' # Example with toy data
+#' set.seed(123)
+#' hist_sizes <- rgamma(100, shape = 2, scale = 5)
+#' sim_sizes  <- rgamma(200, shape = 2, scale = 4)
+#'
+#' check_fire_data(fires_hist_size = hist_sizes,
+#'                 sim_perimeters_size = sim_sizes,
+#'                 n_years = 10)
+#' }
+#'
+#' @seealso \code{\link{get_select_params}}
+#'
+#' @export
+check_fire_data <- function(fires_hist_size, sim_perimeters_size, n_years) {
+  size_check <- max(fires_hist_size) > max(sim_perimeters_size)
+  area_check <- sum(fires_hist_size) > sum(sim_perimeters_size)
+
+  if (size_check) {
+    print("Simulated fires are too small. Consider running extra simulations or trim historical fires to match.")
+  }
+  if (area_check) {
+    print("Not enough simulated fires. Extra simulations are needed.")
+  }
+  if (!size_check & !area_check) {
+    st <- get_select_params(fires_hist_size, sim_perimeters_size, n_years)
+    num_seasons <- floor(st * 0.25)
+
+    if (num_seasons > 0) {
+      cat("Sufficient simulated perimeters and burned area. Maximum surface threshold: ",
+          st, ".\n Recommended surface threshold: ",
+          floor(st * 0.1), "\n")
+      return(num_seasons)
+    } else {
+      "Not enough simulated fires. Extra simulations are needed."
+    }
+  }
+}
+
+#' Remove Duplicate Polygons from Candidate Set
+#'
+#' This function checks a set of candidate polygons and removes duplicates
+#' based on spatial equality. It iteratively removes duplicated polygons
+#' until none remain.
+#'
+#' @param candidates An \code{sf} object containing candidate polygons.
+#'
+#' @return An \code{sf} object with duplicate polygons removed.
+#' The function also prints messages to the console indicating whether
+#' duplicates were found and their indices.
+#'
+#' @details
+#' Duplicates are detected using \code{sf::st_equals()}, which checks
+#' for geometric equality between polygons.
+#' The function continues removing duplicates until no further matches are found.
+#'
+#' @examples
+#' \dontrun{
+#' library(sf)
+#'
+#' # Create a simple sf object with duplicate polygons
+#' poly1 <- st_polygon(list(rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0))))
+#' poly2 <- st_polygon(list(rbind(c(0,0), c(1,0), c(1,1), c(0,1), c(0,0)))) # duplicate
+#' poly3 <- st_polygon(list(rbind(c(2,2), c(3,2), c(3,3), c(2,3), c(2,2))))
+#'
+#' candidates <- st_sf(geometry = st_sfc(poly1, poly2, poly3))
+#'
+#' cleansed <- cleanse_duplicates(candidates)
+#' }
+#'
+#' @seealso \code{\link[sf]{st_equals}}
+#'
+#' @import sf
+#' @export
+cleanse_duplicates <- function(candidates) {
+  candidate_surfaces <- candidates
+  duplicate_indices <- list(-1)
+
+  while (length(duplicate_indices) > 0) {
+    duplicates <- st_equals(candidate_surfaces)
+    duplicate_indices <- which(sapply(duplicates, length) > 1)
+
+    if (length(duplicate_indices) > 0) {
+      print("Duplicate polygons found at the following indices:\n")
+      print(duplicate_indices)
+      candidate_surfaces <- candidate_surfaces[-duplicate_indices, ]
+    } else {
+      print("No duplicate polygons found.\n")
+    }
+  }
+  return(candidate_surfaces)
+}
+
