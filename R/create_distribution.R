@@ -424,7 +424,7 @@ select_events <- function(event_sizes, event_probabilities, target_hist, bins,
 
                 }, error = function(e) {
                   cat("Error in iteration", i, ":", conditionMessage(e), "\n")
-                  next
+
                 })
 
                 # Store the result of the iteration
