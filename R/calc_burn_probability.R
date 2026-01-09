@@ -85,17 +85,24 @@ flp20_to_df <- function(file){
  #' # Create dummy data for file1 (one fire, FL bin 10)
  #' dummy_data1 <- data.frame(
  #'   XPos = 50, YPos = 50, PBurn = 1,
- #'   FIL1 = 0, FIL2 = 0, FIL3 = 0, FIL4 = 0, FIL5 = 0, FIL6 = 0, FIL7 = 0, FIL8 = 0, FIL9 = 0,
+ #'   FIL1 = 0, FIL2 = 0, FIL3 = 0, FIL4 = 0,
+ #'   FIL5 = 0, FIL6 = 0, FIL7 = 0, FIL8 = 0,
+ #'   FIL9 = 0,
  #'   FIL10 = 1, # This fire is in FL bin 10
- #'   FIL11 = 0, FIL12 = 0, FIL13 = 0, FIL14 = 0, FIL15 = 0, FIL16 = 0, FIL17 = 0, FIL18 = 0, FIL19 = 0, FIL20 = 0
+ #'   FIL11 = 0, FIL12 = 0, FIL13 = 0, FIL14 = 0,
+ #'   FIL15 = 0, FIL16 = 0, FIL17 = 0, FIL18 = 0,
+ #'   FIL19 = 0, FIL20 = 0
  #' )
  #' write.csv(dummy_data1, file1, row.names = FALSE)
  #'
  #' # Create dummy data for file2 (one fire, FL bin 15)
  #' dummy_data2 <- data.frame(
  #'   XPos = 70, YPos = 80, PBurn = 1,
- #'   FIL1 = 0, FIL2 = 0, FIL3 = 0, FIL4 = 0, FIL5 = 0, FIL6 = 0, FIL7 = 0, FIL8 = 0, FIL9 = 0,
- #'   FIL10 = 0, FIL11 = 0, FIL12 = 0, FIL13 = 0, FIL14 = 0, FIL15 = 1, # This fire is in FL bin 15
+ #'   FIL1 = 0, FIL2 = 0, FIL3 = 0, FIL4 = 0,
+ #'   FIL5 = 0, FIL6 = 0, FIL7 = 0, FIL8 = 0,
+ #'   FIL9 = 0,
+ #'   FIL10 = 0, FIL11 = 0, FIL12 = 0, FIL13 = 0,
+ #'   FIL14 = 0, FIL15 = 1, # This fire is in FL bin 15
  #'   FIL16 = 0, FIL17 = 0, FIL18 = 0, FIL19 = 0, FIL20 = 0
  #' )
  #' write.csv(dummy_data2, file2, row.names = FALSE)

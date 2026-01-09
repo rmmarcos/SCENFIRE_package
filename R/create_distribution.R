@@ -123,7 +123,10 @@ build_target_hist <- function(num_bins=20, logaritmic=T, sizes, event_surfaces){
 #' historical_sizes_ex <- c(10, 50, 100, 200, 500, 1000)
 #' # Dummy 'event_surfaces' for example context (replace with actual data)
 #' event_surfaces <- c(5, 15, 25, 35, 45, 55)
-#' target_info_ex <- build_target_hist(num_bins = 5, logaritmic = TRUE, sizes = historical_sizes_ex)
+#' target_info_ex <- build_target_hist(event_surfaces = event_surfaces,
+#'                                     num_bins = 5,
+#'                                     logaritmic = TRUE,
+#'                                     sizes = historical_sizes_ex)
 #' target_hist_ex <- target_info_ex$target_hist
 #' bins_ex <- target_info_ex$bins
 #'
@@ -139,7 +142,10 @@ build_target_hist <- function(num_bins=20, logaritmic=T, sizes, event_surfaces){
 #'
 #' # Example selected surfaces for linear transformation
 #' simulated_surfaces_linear_ex <- c(15, 60, 110, 210, 480, 950)
-#' target_info_linear_ex <- build_target_hist(num_bins = 5, logaritmic = FALSE, sizes = historical_sizes_ex)
+#' target_info_linear_ex <- build_target_hist(event_surfaces = event_surfaces,
+#'                                            num_bins = 5,
+#'                                            logaritmic = FALSE,
+#'                                            sizes = historical_sizes_ex)
 #' target_hist_linear_ex <- target_info_linear_ex$target_hist
 #' bins_linear_ex <- target_info_linear_ex$bins
 #'
@@ -228,7 +234,8 @@ calculate_discrepancy <- function(selected_surfaces, target_hist, bins, logaritm
 #' # Discard simulated fires that are too large (below 110% max historical size)
 #' event_surfaces <- event_surfaces[event_surfaces<max(historical_data_for_target)*1.1]
 #' event_probabilities <- rnorm(length(event_surfaces))
-#' event_probabilities <- (event_probabilities-min(event_probabilities))/(max(event_probabilities)-min(event_probabilities))
+#' event_probabilities <- (event_probabilities-min(event_probabilities))/
+#'                         (max(event_probabilities)-min(event_probabilities))
 #'
 #' y <- 100 #number of years spanning historical fire data
 #' check_fire_data(fires_hist_size = historical_data_for_target,
@@ -521,13 +528,15 @@ visualize_selected_dist <- function(result = result, logaritmic = TRUE,
       log(selected_surfaces + 1e-06)
       else selected_surfaces)
     df_target <- data.frame(x = bin_mids, density = target_hist)
-    p <- ggplot(df_selected, aes(x = surface)) + geom_histogram(aes(y = after_stat(density),
-                                                                    fill = "Selected"), breaks = bins, color = "steelblue4",
-                                                                alpha = 0.8) + geom_line(data = df_target, aes(x = x,
-                                                                                                               y = density, color = "Target"), size = 1.2) +
+    p <- ggplot(df_selected, aes(x = surface)) +
+      geom_histogram(aes(y = after_stat(density),
+                         fill = "Selected"), breaks = bins, color = "steelblue4", alpha = 0.8) +
+      geom_line(data = df_target, aes(x = x, y = density, color = "Target"), size = 1.2) +
       scale_fill_manual(name = "Distribution", values = c(Selected = "#799fbf"),
-                        labels = c(Selected = "Selected")) + scale_color_manual(name = "Distribution",
-                                                                                values = c(Target = "#a65455"), labels = c(Target = "Target")) +
+                        labels = c(Selected = "Selected")) +
+      scale_color_manual(name = "Distribution",
+                         values = c(Target = "#a65455"),
+                         labels = c(Target = "Target")) +
       labs(title = if (logaritmic)
         "Selected vs. Target Distribution (log-transformed)"
         else "Selected vs. Target Distribution", x = if (logaritmic)

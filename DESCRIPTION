@@ -1,6 +1,6 @@
 Package: scenfire
 Type: Package
-Title: A post-Processing scenario-based algorithm for the integration of wildfire spread simulations
+Title: A Post-Processing Scenario-Based Algorithm for the Integration of Wildfire Spread Simulations
 Version: 0.1.0
 Authors@R: c(
     person(
@@ -9,7 +9,7 @@ Authors@R: c(
       role = c("aut", "cre")
     )
   )
-Description: SCENFIRE is a specialized selection algorithm designed to align simulated 
+Description: This package is a specialized selection algorithm designed to align simulated 
   fire perimeters with specific fire size distribution scenarios. The foundation of this 
   approach lies in generating a vast collection of plausible simulated fires across a wide 
   range of conditions, assuming a random pattern of ignition. 
@@ -22,6 +22,7 @@ LazyData: true
 RoxygenNote: 7.3.2
 Imports: 
     dplyr,
+    ggplot2,
     foreach,
     methods,
     readr,
